@@ -16,6 +16,16 @@
             align-items: center;
             height: 100vh;
         }
+        .section {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+        }
         .container {
             background: rgba(255, 255, 255, 0.9);
             padding: 20px;
@@ -70,7 +80,7 @@
             <label>Temperature max:<input type="text" name="Temperature max" value="{{ config['Temperature max'] }}"></label>
             <label>Moisture min:<input type="text" name="Moisture min" value="{{ config['Moisture min'] }}"></label>
             <label>Moisture max:<input type="text" name="Moisture max" value="{{ config['Moisture max'] }}"></label>
-            <button type="submit">Speichern</button>
+            <button type="submit">Save</button>
         </form>
     </div>
 </body>
