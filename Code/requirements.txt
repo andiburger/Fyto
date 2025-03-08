@@ -1,0 +1,9 @@
+logging
+spidev
+Pillow
+requests
+paho-mqtt
+adafruit-circuitpython-ads1x15
+adafruit-circuitpython-busdevice
+adafruit-circuitpython-board
+flask
