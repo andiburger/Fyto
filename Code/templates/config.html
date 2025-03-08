@@ -1,86 +1,47 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Pot Config</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: url('/static/background.jpg') no-repeat center center fixed;
-            background-size: cover;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .section {
-            background-color: white;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .section h2 {
-            margin-top: 0;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 300px;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 15px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background: #218838;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/styles.css"> <!-- External CSS -->
 </head>
 <body>
     <div class="container">
-        <h2>Smart Pot Config</h2>
-        <form action="/set_config" method="post">
-            <label>MQTT Host:<input type="text" name="MQTT Host" value="{{ config['MQTT Host'] }}"></label>
-            <label>MQTT Port:<input type="text" name="MQTT Port" value="{{ config['MQTT Port'] }}"></label>
-            <label>MQTT Topic:<input type="text" name="MQTT Topic" value="{{ config['MQTT Topic'] }}"></label>
-            <label>MQTT Username:<input type="text" name="MQTT Username" value="{{ config['MQTT Username'] }}"></label>
-            <label>MQTT Password:<input type="password" name="MQTT Password" value="{{ config['MQTT Password'] }}"></label>
-            <label>Light Intensity min:<input type="text" name="Light Intensity min" value="{{ config['Light Intensity min'] }}"></label>
-            <label>Light Intensity max:<input type="text" name="Light Intensity max" value="{{ config['Light Intensity max'] }}"></label>
-            <label>Temperature min:<input type="text" name="Temperature min" value="{{ config['Temperature min'] }}"></label>
-            <label>Temperature max:<input type="text" name="Temperature max" value="{{ config['Temperature max'] }}"></label>
-            <label>Moisture min:<input type="text" name="Moisture min" value="{{ config['Moisture min'] }}"></label>
-            <label>Moisture max:<input type="text" name="Moisture max" value="{{ config['Moisture max'] }}"></label>
-            <button type="submit">Save</button>
+        <h2 class="title">Smart Pot Configuration</h2>
+        <form action="/set_config" method="post" class="form-container">
+            <div class="sections">
+                <div class="section">
+                    <h3>MQTT Settings</h3>
+                    <label>Host:<input type="text" name="MQTT Host" value="{{ config['MQTT Host'] }}"></label>
+                    <label>Port:<input type="text" name="MQTT Port" value="{{ config['MQTT Port'] }}"></label>
+                    <label>Topic:<input type="text" name="MQTT Topic" value="{{ config['MQTT Topic'] }}"></label>
+                    <label>Username:<input type="text" name="MQTT Username" value="{{ config['MQTT Username'] }}"></label>
+                    <label>Password:<input type="password" name="MQTT Password" value="{{ config['MQTT Password'] }}"></label>
+                </div>
+
+                <div class="section">
+                    <h3>Light Intensity</h3>
+                    <label>Min:<input type="text" name="Light Intensity min" value="{{ config['Light Intensity min'] }}"></label>
+                    <label>Max:<input type="text" name="Light Intensity max" value="{{ config['Light Intensity max'] }}"></label>
+                </div>
+
+                <div class="section">
+                    <h3>Temperature</h3>
+                    <label>Min:<input type="text" name="Temperature min" value="{{ config['Temperature min'] }}"></label>
+                    <label>Max:<input type="text" name="Temperature max" value="{{ config['Temperature max'] }}"></label>
+                </div>
+
+                <div class="section">
+                    <h3>Moisture</h3>
+                    <label>Min:<input type="text" name="Moisture min" value="{{ config['Moisture min'] }}"></label>
+                    <label>Max:<input type="text" name="Moisture max" value="{{ config['Moisture max'] }}"></label>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <button type="submit">Save</button>
+            </div>
         </form>
     </div>
 </body>
