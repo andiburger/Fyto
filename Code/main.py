@@ -6,7 +6,13 @@ sys.path.append("..")
 from lib import LCD_2inch
 from PIL import Image,ImageDraw,ImageFont
 import socket
+import requests
+import json
+import subprocess
 
+
+# path to sensors script
+script_path = 'sensors.py'
 
 # Raspberry Pi pin configuration:
 RST = 27
@@ -57,6 +63,18 @@ def show(emotion):
 
 def main():
     global doInterrupt, showOn
+    url = 'http://127.0.0.1:5000/get_config'
+    response = requests.get(url)
+    if response.status_code == 200:
+        config_data = response.json() 
+    else:
+        logging.error(f"Error: {response.status_code}")
+    # TODO check if all configs are available
+    # if not inform user and exit
+    # start sensors script detached
+    logging.info("Starting sensors script")
+    subprocess.Popen([sys.executable, script_path, config_data], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # sensors script will send data to this server
     previousData = 'happy'
     show('happy')
     conn, addr = server.accept()
@@ -72,10 +90,19 @@ def main():
                 show(data)
         except socket.timeout:
             if showOn!=1:
-                show(previousData) 
+                show(previousData)
+
                 
 if __name__=='__main__':
     try:
+        # get configuration from server
+        url = 'http://127.0.0.1:5000/get_config'
+        response = requests.get(url)
+        if response.status_code == 200:
+            config_data = response.json() 
+            print(config_data)
+        else:
+            print(f"Error: {response.status_code}")
         main()
     except KeyboardInterrupt:
         exit()

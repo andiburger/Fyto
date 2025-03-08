@@ -34,3 +34,5 @@ instance/
 # Git-specific files
 .git/
 *.orig
+
+.DS_Store

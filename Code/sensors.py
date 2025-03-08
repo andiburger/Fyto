@@ -9,6 +9,14 @@ from paho.mqtt import client as mqtt_client
 import random
 import logging
 import json
+import sys
+
+# sensor script receives config via sys.argv
+print(f"arguments: {sys.argv}")
+cfg={}
+for i, arg in enumerate(sys.argv):
+    cfg = json.loads(arg)
+    
 
 i2c = busio.I2C(board.SCL, board.SDA)
 ads = ADS.ADS1115(i2c)
@@ -30,13 +38,21 @@ Savory_DataSent = 0
 Happy_DataSent = 0
 TemperatureDataSent = 0
 
+# min max values
+LDR_Percent_min = cfg['Light Intensity min']#20
+LDR_Percent_max = cfg['Light Intensity max']#20
+Temperature_min = cfg['Temperature min']#22
+Temperature_max = cfg['Temperature max']#30
+Moisture_min = cfg['Moisture min']#10
+Moisture_max = cfg['Moisture max']#90
+
 # constants for mqtt
-broker = '192.168.178.160'
-port = 1883
-topic = "smart_pot/data"
+broker = cfg['MQTT Host']#'192.168.178.160'
+port = cfg['MQTT Port']#1883
+topic = cfg['MQTT Topic']#"smart_pot/data"
 client_id = f'smart_pot-{random.randint(0, 1000)}'
-# username = 'YOUR_USERNAME'
-# password = 'YOUR_PASSWORD'
+username = cfg['MQTT Username']#'YOUR_USERNAME'
+password = cfg['MQTT Password']#'YOUR_PASSWORD'
 FIRST_RECONNECT_DELAY = 1
 RECONNECT_RATE = 2
 MAX_RECONNECT_COUNT = 12
@@ -51,8 +67,6 @@ def _map(x, in_min, in_max, out_min, out_max):
 
 def connect_mqtt():
     def on_connect(client, userdata, flags, rc):
-    # For paho-mqtt 2.0.0, you need to add the properties parameter.
-    # def on_connect(client, userdata, flags, rc, properties):
         if rc == 0:
             print("Connected to MQTT Broker!")
         else:
@@ -60,10 +74,8 @@ def connect_mqtt():
     # Set Connecting Client ID
     client = mqtt_client.Client(client_id)
 
-    # For paho-mqtt 2.0.0, you need to set callback_api_version.
-    # client = mqtt_client.Client(client_id=client_id, callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2)
-
-    # client.username_pw_set(username, password)
+    if username:
+        client.username_pw_set(username, password)
     client.on_connect = on_connect
     client.connect(broker, port)
     return client
@@ -117,14 +129,14 @@ while True:
         _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{topic}`")
     else:      
         _LOGGER.error(f"Failed to send message to topic {topic}")
-    if (LDR_Percent < 20):
+    if (LDR_Percent < LDR_Percent_max):
         if(LowIn_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
             client.send(bytes('sleep','utf-8'))
             #client.close()
             HighIn_DataSent = 0
             LowIn_DataSent = 1
-    elif (LDR_Percent > 20):
+    elif (LDR_Percent > LDR_Percent_min):
         if(HighIn_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
             client.send(bytes('happy','utf-8'))
@@ -132,7 +144,7 @@ while True:
             HighIn_DataSent = 1
             LowIn_DataSent = 0
         
-    if (Moisture_Percent < 10):
+    if (Moisture_Percent < Moisture_min):
         Moisture_Recent = Moisture_Percent
         if(Thirsty_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
@@ -141,7 +153,7 @@ while True:
             Thirsty_DataSent = 1
             Savory_DataSent = 0
             Happy_DataSent = 0
-    elif (Moisture_Percent>10 and Moisture_Recent < Moisture_Percent and Moisture_Percent < 90):
+    elif (Moisture_Percent>Moisture_min and Moisture_Recent < Moisture_Percent and Moisture_Percent < Moisture_max):
         Moisture_Recent = Moisture_Percent
         if(Savory_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
@@ -150,7 +162,7 @@ while True:
             Savory_DataSent = 1
             Thirsty_DataSent = 0
             Happy_DataSent = 0
-    elif (Moisture_Percent > 90):
+    elif (Moisture_Percent > Moisture_max):
         Moisture_Recent = Moisture_Percent
         if(Happy_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
@@ -160,13 +172,13 @@ while True:
             Savory_DataSent = 0
             Thirsty_DataSent = 0
 
-    if(Temperature>30):
+    if(Temperature>Temperature_max):
         if(TemperatureDataSent == 0):
             #client.connect(('0.0.0.0', 8080))
             client.send(bytes('hotty','utf-8'))
             #client.close()
             TemperatureDataSent = 1
-    elif(Temperature<22):
+    elif(Temperature<Temperature_min):
         if(TemperatureDataSent == 0):
             #client.connect(('0.0.0.0', 8080))
             client.send(bytes('freez','utf-8'))
