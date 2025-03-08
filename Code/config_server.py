@@ -31,5 +31,6 @@ def set_config():
 def get_config():
     return jsonify(config_data)
 
+
 if __name__ == '__main__':
     app.run(debug=True)

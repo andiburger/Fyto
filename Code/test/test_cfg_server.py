@@ -28,7 +28,19 @@ def test_cfg_server_empty_config():
         "Moisture max": ""
     }
 
+def test_mqtt_cfg_available():
+    url = 'http://127.0.0.1:5000/get_config'
+    response = requests.get(url)
+    if response.status_code == 200:
+        config_data = response.json() 
+        print(config_data['MQTT Host'])
+    else:
+        print(f"Error: {response.status_code}")
+    assert config_data['MQTT Host'] != "" and config_data['MQTT Topic'] != "" and config_data['MQTT Port'] != ""
+     
+
 
 
 if __name__ == '__main__':
     test_cfg_server_empty_config()
+    test_mqtt_cfg_available()
