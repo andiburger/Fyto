@@ -9,10 +9,19 @@ import socket
 import requests
 import json
 import subprocess
+from threading import Thread
+import time
 
 
 # path to sensors script
 script_path = 'sensors.py'
+# path to config server script
+config_server_path = 'config_server'
+# global variable to store config data
+config_data = {}
+
+cfg_server_process = None
+sensor_server_process = None
 
 # Raspberry Pi pin configuration:
 RST = 27
@@ -61,19 +70,45 @@ def show(emotion):
         logging.info("quit:")
         exit()
 
+def run_flask():
+    from config_server import app
+    app.run(debug=True)
+
+def run_sensors(config_data):
+    subprocess.Popen([sys.executable, script_path, json.dumps(config_data)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 def main():
     global doInterrupt, showOn
+
+    # Start the Flask server detached
+    logging.info("Starting Flask server")
+    cfg_server_process = subprocess.Popen(
+    ["waitress-serve", "--host=0.0.0.0", "--port=5000", "config_server:app"],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE
+    )   
+    logging.info("Flask server started")
+
+    # Wait until the Flask server has a valid configuration
     url = 'http://127.0.0.1:5000/get_config'
-    response = requests.get(url)
-    if response.status_code == 200:
-        config_data = response.json() 
-    else:
-        logging.error(f"Error: {response.status_code}")
-    # TODO check if all configs are available
-    # if not inform user and exit
+    while True:
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                config_data = response.json()
+                # Check if all required configs are available
+                if all(value != "" for value in config_data.values()):
+                    break
+            logging.info("Waiting for valid configuration...")
+        except requests.exceptions.ConnectionError:
+            logging.info("Waiting for Flask server to start...")
+        time.sleep(1)
+
+    logging.info("Valid configuration received")
+
     # start sensors script detached
     logging.info("Starting sensors script")
-    subprocess.Popen([sys.executable, script_path, config_data], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    sensor_server_process = subprocess.Popen([sys.executable, script_path, config_data], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     # sensors script will send data to this server
     previousData = 'happy'
     show('happy')
@@ -94,15 +129,6 @@ def main():
 
                 
 if __name__=='__main__':
-    try:
-        # get configuration from server
-        url = 'http://127.0.0.1:5000/get_config'
-        response = requests.get(url)
-        if response.status_code == 200:
-            config_data = response.json() 
-            print(config_data)
-        else:
-            print(f"Error: {response.status_code}")
-        main()
-    except KeyboardInterrupt:
-        exit()
+    main()
+    cfg_server_process.terminate()
+    sensor_server_process.terminate()
