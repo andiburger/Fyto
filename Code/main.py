@@ -41,6 +41,11 @@ doInterrupt = 0
 showOn = 0
 
 
+def is_venv():
+    return sys.prefix != sys.base_prefix  
+
+def is_virtualenv():
+    return hasattr(sys, "real_prefix") 
 
 
 def show(emotion):
@@ -70,23 +75,23 @@ def show(emotion):
         logging.info("quit:")
         exit()
 
-def run_flask():
-    from config_server import app
-    app.run(debug=True)
-
-def run_sensors(config_data):
-    subprocess.Popen([sys.executable, script_path, json.dumps(config_data)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
 def main():
     global doInterrupt, showOn
-
     # Start the Flask server detached
     logging.info("Starting Flask server")
-    cfg_server_process = subprocess.Popen(
-    ["waitress-serve", "--host=0.0.0.0", "--port=5000", "config_server:app"],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE
-    )   
+    if is_venv():
+        logging.info("Running in virtual environment")
+        cfg_server_process = subprocess.Popen([sys.prefix, "-m", "waitress", "--host=0.0.0.0", "--port=5000", "config_server:app"])
+    elif is_virtualenv():
+        logging.info("Running in virtual environment")
+        cfg_server_process = subprocess.Popen([getattr(sys, "real_prefix", sys.prefix), "-m", "waitress", "--host=0.0.0.0", "--port=5000", "config_server:app"])
+    else:
+        logging.info("Running in global environment")
+        cfg_server_process = subprocess.Popen(
+        ["waitress-serve", "--host=0.0.0.0", "--port=5000", "config_server:app"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+        )   
     logging.info("Flask server started")
 
     # Wait until the Flask server has a valid configuration
@@ -108,7 +113,16 @@ def main():
 
     # start sensors script detached
     logging.info("Starting sensors script")
-    sensor_server_process = subprocess.Popen([sys.executable, script_path, config_data], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if is_venv():
+        logging.info("Running in virtual environment")
+        sensor_server_process = subprocess.Popen([sys.prefix, script_path, config_data], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    elif is_virtualenv():
+        logging.info("Running in virtual environment")
+        sensor_server_process = subprocess.Popen([getattr(sys, "real_prefix", sys.prefix), script_path, config_data], stdout=subprocess.DEVNULL, stderr=subprocess
+        .DEVNULL)
+    else:
+        logging.info("Running in global environment")
+        sensor_server_process = subprocess.Popen([sys.executable, script_path, config_data], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     # sensors script will send data to this server
     previousData = 'happy'
     show('happy')
@@ -126,6 +140,7 @@ def main():
         except socket.timeout:
             if showOn!=1:
                 show(previousData)
+                
 
                 
 if __name__=='__main__':
