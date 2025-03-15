@@ -10,12 +10,16 @@ import random
 import logging
 import json
 import sys
+_LOGGER = logging.getLogger(__name__)
+
 
 # sensor script receives config via sys.argv
 print(f"arguments: {sys.argv}")
+logging.info(f"arguments: {sys.argv}")
 cfg={}
 for i, arg in enumerate(sys.argv):
     cfg = json.loads(arg)
+    print(f"arg {i}: {arg}")
     
 
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -59,7 +63,6 @@ MAX_RECONNECT_COUNT = 12
 MAX_RECONNECT_DELAY = 60
 
 
-_LOGGER = logging.getLogger(__name__)
 
 # Map function
 def _map(x, in_min, in_max, out_min, out_max):
