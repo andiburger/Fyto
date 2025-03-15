@@ -102,7 +102,7 @@ def on_disconnect(client, userdata, rc):
 
 #Setup Client for communication
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('0.0.0.0', 1013))
+client.connect(('0.0.0.0', 5050))
 
 mqtt_client = connect_mqtt()
 mqtt_client.on_disconnect = on_disconnect

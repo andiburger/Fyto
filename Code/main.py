@@ -34,7 +34,7 @@ directory = os.getcwd()
 
 #Server For Data Reception
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(('0.0.0.0', 1013))
+server.bind(('0.0.0.0', 5050))
 server.listen(2)
 
 doInterrupt = 0
