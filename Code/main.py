@@ -115,7 +115,7 @@ def main():
     logging.info("Starting sensors script")
     if is_venv():
         logging.info("Running in virtual environment")
-        sensor_server_process = subprocess.Popen([sys.prefix, script_path, config_data], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        sensor_server_process = subprocess.Popen([sys.executable, script_path, config_data], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     elif is_virtualenv():
         logging.info("Running in virtual environment")
         sensor_server_process = subprocess.Popen([getattr(sys, "real_prefix", sys.prefix), script_path, config_data], stdout=subprocess.DEVNULL, stderr=subprocess
