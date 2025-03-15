@@ -18,6 +18,7 @@ print(f"arguments: {sys.argv}")
 logging.info(f"arguments: {sys.argv}")
 cfg={}
 json.loads(sys.argv[1])
+logging.info(f"config: {cfg}")
     
 
 i2c = busio.I2C(board.SCL, board.SDA)
