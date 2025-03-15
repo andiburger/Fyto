@@ -30,7 +30,7 @@ This project is a Flask-based configuration server and sensor system for monitor
 
 ## Usage
 
-### 2️⃣ **Start the Main Program**
+### **Start the Main Program**
 The `main.py` script starts the configuration server and sensor system as subprocesses.
 ```sh
 python main.py
