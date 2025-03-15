@@ -50,6 +50,7 @@ def is_virtualenv():
 
 def show(emotion):
     global doInterrupt, showOn, disp
+    logging.info("emotion:" + emotion)
     try:
         disp = LCD_2inch.LCD_2inch(spi=SPI.SpiDev(bus, device),spi_freq=90000000,rst=RST,dc=DC,bl=BL)
         disp.Init() # Initialize library.
