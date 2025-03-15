@@ -104,7 +104,7 @@ def main():
                 # Check if all required configs are available
                 print(config_data)
                 excluded_keys = {"MQTT Username", "MQTT Password"}  # optional keys MQTT Username and MQTT Password
-                if all(value != "" or key in excluded_keys for key, value in config_data.values()):
+                if all(value != "" or key in excluded_keys for key, value in config_data.items()):
                     logging.info("Valid configuration received")
                     break
             logging.info("Waiting for valid configuration...")
