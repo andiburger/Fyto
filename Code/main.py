@@ -81,7 +81,7 @@ def main():
     logging.info("Starting Flask server")
     if is_venv():
         logging.info("Running in virtual environment")
-        cfg_server_process = subprocess.Popen([sys.prefix, "-m", "waitress", "--host=0.0.0.0", "--port=5000", "config_server:app"])
+        cfg_server_process = subprocess.Popen([sys.executable, "-m", "waitress", "--host=0.0.0.0", "--port=5000", "config_server:app"])
     elif is_virtualenv():
         logging.info("Running in virtual environment")
         cfg_server_process = subprocess.Popen([getattr(sys, "real_prefix", sys.prefix), "-m", "waitress", "--host=0.0.0.0", "--port=5000", "config_server:app"])
