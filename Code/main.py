@@ -135,7 +135,7 @@ def main():
     while True:
         try:
             data = conn.recv(5).decode()
-            #print(data)
+            print(data)
             if (previousData != data):
                 print(data)
                 doInterrupt = 1
