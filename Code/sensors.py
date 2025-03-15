@@ -15,10 +15,11 @@ _LOGGER = logging.getLogger(__name__)
 
 # sensor script receives config via sys.argv
 print(f"arguments: {sys.argv}")
-logging.info(f"arguments: {sys.argv}")
+_LOGGER.info(f"arguments: {sys.argv}")
 cfg={}
 json.loads(sys.argv[1])
-logging.info(f"config: {cfg}")
+print(f"config: {cfg}")
+_LOGGER.info(f"config: {cfg}")
     
 
 i2c = busio.I2C(board.SCL, board.SDA)
