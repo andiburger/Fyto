@@ -103,7 +103,8 @@ def main():
                 config_data = response.json()
                 # Check if all required configs are available
                 print(config_data)
-                if all(value != "" for value in config_data.values()):
+                excluded_keys = {"MQTT Username", "MQTT Password"}  # optional keys MQTT Username and MQTT Password
+                if all(value != "" or key in excluded_keys for key, value in config_data.values()):
                     logging.info("Valid configuration received")
                     break
             logging.info("Waiting for valid configuration...")
