@@ -17,9 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 print(f"arguments: {sys.argv}")
 logging.info(f"arguments: {sys.argv}")
 cfg={}
-for i, arg in enumerate(sys.argv):
-    cfg = json.loads(arg)
-    print(f"arg {i}: {arg}")
+json.loads(sys.argv[1])
     
 
 i2c = busio.I2C(board.SCL, board.SDA)
