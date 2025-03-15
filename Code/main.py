@@ -103,6 +103,7 @@ def main():
                 config_data = response.json()
                 # Check if all required configs are available
                 if all(value != "" for value in config_data.values()):
+                    logging.info("Valid configuration received")
                     break
             logging.info("Waiting for valid configuration...")
         except requests.exceptions.ConnectionError:
