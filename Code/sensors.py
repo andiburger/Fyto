@@ -43,12 +43,12 @@ Happy_DataSent = 0
 TemperatureDataSent = 0
 
 # min max values
-LDR_Percent_min = cfg['Light Intensity min']#20
-LDR_Percent_max = cfg['Light Intensity max']#20
-Temperature_min = cfg['Temperature min']#22
-Temperature_max = cfg['Temperature max']#30
-Moisture_min = cfg['Moisture min']#10
-Moisture_max = cfg['Moisture max']#90
+LDR_Percent_min = int(cfg['Light Intensity min'])#20
+LDR_Percent_max = int(cfg['Light Intensity max'])#20
+Temperature_min = int(cfg['Temperature min'])#22
+Temperature_max = int(cfg['Temperature max'])#30
+Moisture_min = int(cfg['Moisture min'])#10
+Moisture_max = int(cfg['Moisture max'])#90
 
 # constants for mqtt
 broker = cfg['MQTT Host']#'192.168.178.160'
