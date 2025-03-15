@@ -135,14 +135,14 @@ while True:
     if (LDR_Percent < LDR_Percent_max):
         if(LowIn_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
-            client.send(bytes('sleepy','utf-8'))
+            client.send(bytes('sleepy\n','utf-8'))
             #client.close()
             HighIn_DataSent = 0
             LowIn_DataSent = 1
     elif (LDR_Percent > LDR_Percent_min):
         if(HighIn_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
-            client.send(bytes('happy','utf-8'))
+            client.send(bytes('happy\n','utf-8'))
             #client.close()
             HighIn_DataSent = 1
             LowIn_DataSent = 0
@@ -151,7 +151,7 @@ while True:
         Moisture_Recent = Moisture_Percent
         if(Thirsty_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
-            client.send(bytes('thirsty','utf-8'))
+            client.send(bytes('thirsty\n','utf-8'))
             #client.close()
             Thirsty_DataSent = 1
             Savory_DataSent = 0
@@ -160,7 +160,7 @@ while True:
         Moisture_Recent = Moisture_Percent
         if(Savory_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
-            client.send(bytes('savory','utf-8'))
+            client.send(bytes('savory\n','utf-8'))
             #client.close()
             Savory_DataSent = 1
             Thirsty_DataSent = 0
@@ -169,7 +169,7 @@ while True:
         Moisture_Recent = Moisture_Percent
         if(Happy_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
-            client.send(bytes('savory','utf-8'))
+            client.send(bytes('savory\n','utf-8'))
             #client.close()
             Happy_DataSent = 1
             Savory_DataSent = 0
@@ -178,13 +178,13 @@ while True:
     if(Temperature>Temperature_max):
         if(TemperatureDataSent == 0):
             #client.connect(('0.0.0.0', 8080))
-            client.send(bytes('hot','utf-8'))
+            client.send(bytes('hot\n','utf-8'))
             #client.close()
             TemperatureDataSent = 1
     elif(Temperature<Temperature_min):
         if(TemperatureDataSent == 0):
             #client.connect(('0.0.0.0', 8080))
-            client.send(bytes('freezy','utf-8'))
+            client.send(bytes('freeze\n','utf-8'))
             #client.close()
             TemperatureDataSent = 1
     else:

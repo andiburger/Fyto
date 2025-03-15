@@ -134,7 +134,10 @@ def main():
     conn.settimeout(0.1)
     while True:
         try:
-            data = conn.recv(5).decode()
+            data = ""
+            data = conn.recv(1024).decode('utf-8') 
+            if '\n' in data:
+                data = data.split('\n', 1)[0]
             print(data)
             if (previousData != data):
                 print(data)
