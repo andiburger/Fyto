@@ -71,9 +71,9 @@ def _map(x, in_min, in_max, out_min, out_max):
 def connect_mqtt():
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
-            print("Connected to MQTT Broker!")
+            _LOGGER.info("Connected to MQTT Broker!")
         else:
-            print("Failed to connect, return code %d\n", rc)
+            _LOGGER.error("Failed to connect, return code %d\n", rc)
     # Set Connecting Client ID
     client = mqtt_client.Client(client_id)
 
