@@ -17,7 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 print(f"arguments: {sys.argv}")
 _LOGGER.info(f"arguments: {sys.argv}")
 cfg={}
-json.loads(sys.argv[1])
+cfg = json.loads(sys.argv[1])
 print(f"config: {cfg}")
 _LOGGER.info(f"config: {cfg}")
     
