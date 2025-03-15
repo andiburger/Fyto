@@ -52,7 +52,7 @@ Moisture_max = cfg['Moisture max']#90
 
 # constants for mqtt
 broker = cfg['MQTT Host']#'192.168.178.160'
-port = cfg['MQTT Port']#1883
+port = int(cfg['MQTT Port'])#1883
 topic = cfg['MQTT Topic']#"smart_pot/data"
 client_id = f'smart_pot-{random.randint(0, 1000)}'
 username = cfg['MQTT Username']#'YOUR_USERNAME'
