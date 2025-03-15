@@ -111,9 +111,9 @@ mqtt_client = connect_mqtt()
 mqtt_client.on_disconnect = on_disconnect
 mqtt_client.loop_start()
 
-
+MQTT_MSG = ""
+MQTT_MSG_NEW = ""
 while True:
-    
     # Read the specified ADC channels using the previously set gain value.
     LDR_Value = LDR_channel.value
     LDR_Percent = _map(LDR_Value, 22500, 50, 0, 100)
@@ -125,13 +125,16 @@ while True:
     print("Temperature = ", Temperature)
     print("Light Intensity = ", LDR_Percent)
     print("Moisture % = ", Moisture_Percent)
-    MQTT_MSG=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
-    result = mqtt_client.publish(topic, MQTT_MSG)
-    status = result[0]
-    if status == 0:
-        _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{topic}`")
-    else:      
-        _LOGGER.error(f"Failed to send message to topic {topic}")
+    MQTT_MSG_NEW=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
+    if MQTT_MSG_NEW != MQTT_MSG:
+        # send only if data is changed
+        MQTT_MSG = MQTT_MSG_NEW
+        result = mqtt_client.publish(topic, MQTT_MSG)
+        status = result[0]
+        if status == 0:
+            _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{topic}`")
+        else:      
+            _LOGGER.error(f"Failed to send message to topic {topic}")
     if (LDR_Percent < LDR_Percent_max):
         if(LowIn_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
