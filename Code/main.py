@@ -102,6 +102,7 @@ def main():
             if response.status_code == 200:
                 config_data = response.json()
                 # Check if all required configs are available
+                print(config_data)
                 if all(value != "" for value in config_data.values()):
                     logging.info("Valid configuration received")
                     break
