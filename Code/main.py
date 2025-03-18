@@ -1,7 +1,7 @@
 import os
 import sys 
 import logging
-import spidev as SPI
+import spidev as SPI # type: ignore
 sys.path.append("..")
 from lib import LCD_2inch
 from PIL import Image,ImageDraw,ImageFont

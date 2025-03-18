@@ -2,8 +2,8 @@ import time
 import socket
 import board
 import busio
-import adafruit_ads1x15.ads1115 as ADS
-from adafruit_ads1x15.analog_in import AnalogIn
+import adafruit_ads1x15.ads1115 as ADS # type: ignore
+from adafruit_ads1x15.analog_in import AnalogIn # type: ignore
 
 from paho.mqtt import client as mqtt_client
 import random
