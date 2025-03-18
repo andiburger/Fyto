@@ -10,6 +10,8 @@ import random
 import logging
 import json
 import sys
+# Setup logging
+logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -24,6 +26,8 @@ _LOGGER.info(f"config: {cfg}")
 
 i2c = busio.I2C(board.SCL, board.SDA)
 ads = ADS.ADS1115(i2c)
+# Analog input channels may differ based on the connection
+# use calibration.py to find the correct channel
 Moisture_channel = AnalogIn(ads, ADS.P1)
 LDR_channel = AnalogIn(ads, ADS.P2)
 LM35_channel = AnalogIn(ads, ADS.P3)
@@ -68,6 +72,7 @@ MAX_RECONNECT_DELAY = 60
 def _map(x, in_min, in_max, out_min, out_max):
     return int((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
 
+# Connect to MQTT
 def connect_mqtt():
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
@@ -83,6 +88,7 @@ def connect_mqtt():
     client.connect(broker, port)
     return client
 
+# Disconnect Callback
 def on_disconnect(client, userdata, rc):
     _LOGGER.info("Disconnected with result code: %s", rc)
     reconnect_count, reconnect_delay = 0, FIRST_RECONNECT_DELAY
@@ -107,6 +113,7 @@ def on_disconnect(client, userdata, rc):
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('0.0.0.0', 5050))
 
+#Connect to MQTT
 mqtt_client = connect_mqtt()
 mqtt_client.on_disconnect = on_disconnect
 mqtt_client.loop_start()
@@ -122,9 +129,9 @@ while True:
     ads_ch0 = LM35_channel.value
     ads_Voltage_ch0 = ads_ch0 * ads_bit_Voltage
     Temperature = int(ads_Voltage_ch0 / lm35_constant)
-    print("Temperature = ", Temperature)
-    print("Light Intensity = ", LDR_Percent)
-    print("Moisture % = ", Moisture_Percent)
+    _LOGGER.info("Temperature = ", Temperature)
+    _LOGGER.info("Light Intensity = ", LDR_Percent)
+    _LOGGER.info("Moisture % = ", Moisture_Percent)
     MQTT_MSG_NEW=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
     if MQTT_MSG_NEW != MQTT_MSG:
         # send only if data is changed

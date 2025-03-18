@@ -10,4 +10,11 @@ COPY . /app
 
 RUN pip install -r requirements.txt
 
-CMD ["python", "main.py"]
+# Create a virtual environment
+RUN python -m venv venv
+
+# Activate the virtual environment and install dependencies
+RUN . venv/bin/activate && pip install --no-cache-dir -r requirements.txt
+
+# Command to start the application (ensuring the virtual environment is activated)
+CMD ["/bin/bash", "-c", ". venv/bin/activate && python main.py"]
