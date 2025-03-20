@@ -1,6 +1,6 @@
 # Smart Plant Pot
 
-todo
+Inspired by [Fyto Project](https://www.hackster.io/coderscafe/fyto-turn-your-plant-into-pet-1373d5#code)
 
 ## Installation & Setup
 
