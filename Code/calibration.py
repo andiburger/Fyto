@@ -11,9 +11,21 @@ ads = ADS.ADS1115(i2c)
 Moisture_channel = AnalogIn(ads, ADS.P1)
 LDR_channel = AnalogIn(ads, ADS.P2)
 LM35_channel = AnalogIn(ads, ADS.P3)
+
+# Temperaturberechnung: 10 mV pro °C für den LM35
+def read_temperature():
+    # Lese den Rohwert vom ADC
+    raw_value = ads.readADC(0, gain=1)  # gain=1 für ±4.096V Referenz
+    voltage = raw_value * (4.096 / 32768)  # Berechne die Spannung basierend auf dem Rohwert
+    temperature = voltage * 100  # LM35 gibt 10mV/°C aus, also multiplizieren mit 100
+    return temperature
+
+
 while True:
    print("Moisture: "+ str(Moisture_channel.value))
    print("Light Intensity:" + str(LDR_channel.value))
    print("Temperature:" + str(LM35_channel.value))
+   temp = read_temperature()
+   print(f"Temperature: {temp:.2f} °C")
    time.sleep(1)
 
