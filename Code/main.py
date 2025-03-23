@@ -133,10 +133,11 @@ def main():
     conn, addr = server.accept()
     conn.settimeout(0.1)
     while True:
+        logging.info("waiting for data")
         try:
             data = ""
             data = conn.recv(1024).decode('utf-8')
-            logging.info(data)
+            logging.info("data"+str(data))
             if '\n' in data:
                 data = data.split('\n', 1)[0]
             print(data)
