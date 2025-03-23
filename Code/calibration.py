@@ -12,8 +12,8 @@ Moisture_channel = AnalogIn(ads, ADS.P1)
 LDR_channel = AnalogIn(ads, ADS.P2)
 LM35_channel = AnalogIn(ads, ADS.P3)
 while True:
-   print("Moisture: "+ Moisture_channel.value)
-   print("Light Intensity:" + LDR_channel.value)
-   print("Temperature:" + LM35_channel.value)
+   print("Moisture: "+ str(Moisture_channel.value))
+   print("Light Intensity:" + str(LDR_channel.value))
+   print("Temperature:" + str(LM35_channel.value))
    time.sleep(1)
 
