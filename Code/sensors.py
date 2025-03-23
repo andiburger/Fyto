@@ -4,6 +4,7 @@ import board
 import busio
 import adafruit_ads1x15.ads1115 as ADS # type: ignore
 from adafruit_ads1x15.analog_in import AnalogIn # type: ignore
+from w1thermsensor import W1ThermSensor # type: ignore
 
 from paho.mqtt import client as mqtt_client
 import random
@@ -30,7 +31,9 @@ ads = ADS.ADS1115(i2c)
 # use calibration.py to find the correct channel
 Moisture_channel = AnalogIn(ads, ADS.P1)
 LDR_channel = AnalogIn(ads, ADS.P2)
-LM35_channel = AnalogIn(ads, ADS.P3)
+#LM35_channel = AnalogIn(ads, ADS.P3)
+
+temp_sensor = W1ThermSensor()
 
 ADC_16BIT_MAX = 65536
 lm35_constant = 10.0/1000
@@ -58,6 +61,7 @@ Moisture_max = int(cfg['Moisture max'])#90
 broker = cfg['MQTT Host']#'192.168.178.160'
 port = int(cfg['MQTT Port'])#1883
 topic = cfg['MQTT Topic']#"smart_pot/data"
+update_interval = cfg['MQTT Update Interval']#360
 client_id = f'smart_pot-{random.randint(0, 1000)}'
 username = cfg['MQTT Username']#'YOUR_USERNAME'
 password = cfg['MQTT Password']#'YOUR_PASSWORD'
@@ -119,29 +123,32 @@ mqtt_client.on_disconnect = on_disconnect
 mqtt_client.loop_start()
 
 MQTT_MSG = ""
-MQTT_MSG_NEW = ""
+last_execution_time = time.time() 
 while True:
     # Read the specified ADC channels using the previously set gain value.
     LDR_Value = LDR_channel.value
     LDR_Percent = _map(LDR_Value, 22500, 50, 0, 100)
     Moisture_Value = Moisture_channel.value
     Moisture_Percent = _map(Moisture_Value, 31000, 15500, 0, 100)
-    ads_ch0 = LM35_channel.value
-    ads_Voltage_ch0 = ads_ch0 * ads_bit_Voltage
-    Temperature = int(ads_Voltage_ch0 / lm35_constant)
-    _LOGGER.info(f"Temperature : {Temperature}")
-    _LOGGER.info(f"Light Intensity : {LDR_Percent}")
-    _LOGGER.info(f"Moisture :{Moisture_Percent:.2f}")
-    MQTT_MSG_NEW=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
-    if MQTT_MSG_NEW != MQTT_MSG:
-        # send only if data is changed
-        MQTT_MSG = MQTT_MSG_NEW
+    #ads_ch0 = LM35_channel.value
+    #ads_Voltage_ch0 = ads_ch0 * ads_bit_Voltage
+    Temperature =  temp_sensor.get_temperature()
+    _LOGGER.info(f"Temperature: {Temperature:.2f} °C")
+    _LOGGER.info(f"Light Intensity : {LDR_Percent} %")
+    _LOGGER.info(f"Moisture :{Moisture_Percent:.2f} %")
+    current_time = time.time()
+    if not update_interval:
+        update_interval = 360
+    if current_time - last_execution_time >= update_interval:
+        MQTT_MSG=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
+        #send only every 360 seconds
         result = mqtt_client.publish(topic, MQTT_MSG)
         status = result[0]
         if status == 0:
             _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{topic}`")
         else:      
             _LOGGER.error(f"Failed to send message to topic {topic}")
+        last_execution_time = current_time
     if (LDR_Percent < LDR_Percent_max):
         if(LowIn_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
