@@ -145,6 +145,7 @@ while True:
     if (LDR_Percent < LDR_Percent_max):
         if(LowIn_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
+            _LOGGER.info("Sending sleepy")
             client.send(bytes('sleepy\n','utf-8'))
             #client.close()
             HighIn_DataSent = 0
@@ -152,6 +153,7 @@ while True:
     elif (LDR_Percent > LDR_Percent_min):
         if(HighIn_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
+            _LOGGER.info("Sending happy")
             client.send(bytes('happy\n','utf-8'))
             #client.close()
             HighIn_DataSent = 1
@@ -161,6 +163,7 @@ while True:
         Moisture_Recent = Moisture_Percent
         if(Thirsty_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
+            _LOGGER.info("Sending thirsty")
             client.send(bytes('thirsty\n','utf-8'))
             #client.close()
             Thirsty_DataSent = 1
@@ -170,6 +173,7 @@ while True:
         Moisture_Recent = Moisture_Percent
         if(Savory_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
+            _LOGGER.info("Sending savory")
             client.send(bytes('savory\n','utf-8'))
             #client.close()
             Savory_DataSent = 1
@@ -179,6 +183,7 @@ while True:
         Moisture_Recent = Moisture_Percent
         if(Happy_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
+            _LOGGER.info("Sending savory")
             client.send(bytes('savory\n','utf-8'))
             #client.close()
             Happy_DataSent = 1
@@ -188,12 +193,14 @@ while True:
     if(Temperature>Temperature_max):
         if(TemperatureDataSent == 0):
             #client.connect(('0.0.0.0', 8080))
+            _LOGGER.info("Sending hot")
             client.send(bytes('hot\n','utf-8'))
             #client.close()
             TemperatureDataSent = 1
     elif(Temperature<Temperature_min):
         if(TemperatureDataSent == 0):
             #client.connect(('0.0.0.0', 8080))
+            _LOGGER.info("Sending freeze")
             client.send(bytes('freeze\n','utf-8'))
             #client.close()
             TemperatureDataSent = 1
