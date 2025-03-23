@@ -151,8 +151,8 @@ while True:
             HighIn_DataSent = 0
             LowIn_DataSent = 1
     elif (LDR_Percent > LDR_Percent_min):
-        print("High Intensity")
         if(HighIn_DataSent == 0):
+            print("High Intensity")
             #client.connect(('0.0.0.0', 8080))
             _LOGGER.info("Sending happy")
             client.send(bytes('happy\n','utf-8'))
