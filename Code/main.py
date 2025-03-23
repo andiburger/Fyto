@@ -154,6 +154,16 @@ def main():
 
                 
 if __name__=='__main__':
-    main()
-    cfg_server_process.terminate()
-    sensor_server_process.terminate()
+    try:
+        main()
+    except KeyboardInterrupt:
+        logging.info("Exiting...")
+        if cfg_server_process:
+            logging.info("Terminating Flask server")
+            cfg_server_process.terminate()
+        if sensor_server_process:
+            logging.info("Terminating sensors script")
+            sensor_server_process.terminate()
+        server.close()
+        logging.info("Socket server closed")
+        sys.exit(0)
