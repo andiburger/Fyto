@@ -135,7 +135,8 @@ def main():
     while True:
         try:
             data = ""
-            data = conn.recv(1024).decode('utf-8') 
+            data = conn.recv(1024).decode('utf-8')
+            logging.info(data)
             if '\n' in data:
                 data = data.split('\n', 1)[0]
             print(data)
