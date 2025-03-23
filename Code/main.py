@@ -63,6 +63,7 @@ def show(emotion):
                 doInterrupt = 0
                 break
             else:
+                print(directory+'/emotion/'+emotion+'/frame'+str(i)+'.png')
                 image = Image.open(directory+'/emotion/'+emotion+'/frame'+str(i)+'.png')	
                 image = image.rotate(180)
                 disp.ShowImage(image)
