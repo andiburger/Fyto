@@ -129,9 +129,9 @@ while True:
     ads_ch0 = LM35_channel.value
     ads_Voltage_ch0 = ads_ch0 * ads_bit_Voltage
     Temperature = int(ads_Voltage_ch0 / lm35_constant)
-    _LOGGER.info(f"Temperature : {Temperature}", Temperature)
-    _LOGGER.info(f"Light Intensity : {LDR_Percent}", LDR_Percent)
-    _LOGGER.info(f"Moisture :{Moisture_Percent:.2f}", Moisture_Percent)
+    _LOGGER.info(f"Temperature : {Temperature}")
+    _LOGGER.info(f"Light Intensity : {LDR_Percent}")
+    _LOGGER.info(f"Moisture :{Moisture_Percent:.2f}")
     MQTT_MSG_NEW=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
     if MQTT_MSG_NEW != MQTT_MSG:
         # send only if data is changed
