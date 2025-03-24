@@ -2,6 +2,17 @@
 
 Inspired by [Fyto Project](https://www.hackster.io/coderscafe/fyto-turn-your-plant-into-pet-1373d5#code)
 
+## Hardware components
+- Raspberry Pi Zero 2 W
+- ADS1115 ADC Module 16Bit 4 channels for Raspberry Pi
+- Soil Moisture Sensor Hygrometer Module V1.2
+- DS18B20 digital temperature sensor
+- LDR-Lichtsensor resistiv
+- Power Distributor Terminal Block 2x12
+
+## Wiring
+![Wiring with RPI Zero 2 w](Code/img/wiring_smart_pot_bb.png)
+
 ## Installation & Setup
 
 ### Prerequisites
