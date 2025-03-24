@@ -140,6 +140,7 @@ while True:
     _LOGGER.info(f"Light Intensity : {LDR_Percent} %")
     _LOGGER.info(f"Moisture :{Moisture_Percent:.2f} %")
     current_time = time.time()
+    print(current_time - last_execution_time)
     if current_time - last_execution_time >= update_interval:
         MQTT_MSG=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
         #send only every 360 seconds
