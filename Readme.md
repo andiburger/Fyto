@@ -52,6 +52,17 @@ Open a web browser and connect to the configuration server with the following ad
 
 ![Screenshot of configuration server](Code/img/config_server.png)
 
+Set the parameter as shown in the screenshot above. MQTT User and Password are optional.
+The following parameter can be used as default for light intensity, temperature and moisture:
+- Light intensity min: 20
+- Light intensity max: 20
+
+- Temperature min: 22
+- Temperature max: 30
+
+- Moisture min: 10
+- Moisture max: 90
+
 ## API Endpoints (config_server.py)
 | Method  | Endpoint       | Description |
 |---------|---------------|-------------|
