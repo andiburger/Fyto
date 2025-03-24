@@ -61,7 +61,10 @@ Moisture_max = int(cfg['Moisture max'])#90
 broker = cfg['MQTT Host']#'192.168.178.160'
 port = int(cfg['MQTT Port'])#1883
 topic = cfg['MQTT Topic']#"smart_pot/data"
-update_interval = cfg['MQTT Update Interval']#360
+try:
+    update_interval = int(cfg['MQTT Update Interval'])#360
+except:
+    update_interval = 360
 client_id = f'smart_pot-{random.randint(0, 1000)}'
 username = cfg['MQTT Username']#'YOUR_USERNAME'
 password = cfg['MQTT Password']#'YOUR_PASSWORD'
@@ -137,8 +140,6 @@ while True:
     _LOGGER.info(f"Light Intensity : {LDR_Percent} %")
     _LOGGER.info(f"Moisture :{Moisture_Percent:.2f} %")
     current_time = time.time()
-    if not update_interval:
-        update_interval = 360
     if current_time - last_execution_time >= update_interval:
         MQTT_MSG=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
         #send only every 360 seconds
