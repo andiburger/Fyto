@@ -47,6 +47,11 @@ The `main.py` script starts the configuration server and sensor system as subpro
 python main.py
 ```
 
+## **Configure Smart Pot via Configuration Server
+Open a web browser and connect to the configuration server with the following address: `https://PI-ZERO-IP-ADDR:5000`
+
+![Screenshot of configuration server](Code/img/config_server.png)
+
 ## API Endpoints (config_server.py)
 | Method  | Endpoint       | Description |
 |---------|---------------|-------------|
