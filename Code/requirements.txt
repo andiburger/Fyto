@@ -14,3 +14,4 @@ flask
 waitress
 numpy
 Image
+w1thermsensor
