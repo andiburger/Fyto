@@ -15,3 +15,5 @@ waitress
 numpy
 Image
 w1thermsensor
+astral
+RPi.GPIO

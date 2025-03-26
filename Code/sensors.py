@@ -11,6 +11,11 @@ import random
 import logging
 import json
 import sys
+
+import RPi.GPIO as GPIO # type: ignore
+from datetime import datetime
+from astral import LocationInfo
+from astral.sun import sun
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
@@ -32,6 +37,14 @@ ads = ADS.ADS1115(i2c)
 Moisture_channel = AnalogIn(ads, ADS.P1)
 LDR_channel = AnalogIn(ads, ADS.P2)
 #LM35_channel = AnalogIn(ads, ADS.P3)
+# Set up the backlight pin
+BACKLIGHT_PIN = 18
+# set location for sunrise and sunset
+city = LocationInfo("Berlin", "Germany", "Europe/Berlin", 52.52, 13.405)
+
+# set GPIO mode
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(BACKLIGHT_PIN, GPIO.OUT)
 
 temp_sensor = W1ThermSensor()
 
@@ -73,6 +86,23 @@ RECONNECT_RATE = 2
 MAX_RECONNECT_COUNT = 12
 MAX_RECONNECT_DELAY = 60
 
+
+def backlight_on():
+    """Switches the backlight ON"""
+    GPIO.output(BACKLIGHT_PIN, GPIO.HIGH)
+    _LOGGER.info("backlight ON")
+
+def backlight_off():
+    """Switches the backlight OFF"""
+    GPIO.output(BACKLIGHT_PIN, GPIO.LOW)
+    _LOGGER.info("backlight OFF")
+
+def get_sun_times():
+    """Get the sunrise and sunset times"""
+    s = sun(city.observer, date=datetime.now())
+    sunrise = s["sunrise"].time()  # sunrise
+    sunset = s["sunset"].time()  # sunset
+    return sunrise, sunset
 
 
 # Map function
@@ -128,6 +158,12 @@ mqtt_client.loop_start()
 MQTT_MSG = ""
 last_execution_time = time.time() 
 while True:
+    sunrise, sunset = get_sun_times()
+    now = datetime.now().time()
+    if sunrise <= now <= sunset:
+        backlight_on()  # during the day, backlight ON
+    else:
+        backlight_off()  # at night, backlight OFF
     # Read the specified ADC channels using the previously set gain value.
     LDR_Value = LDR_channel.value
     LDR_Percent = _map(LDR_Value, 22500, 50, 0, 100)
