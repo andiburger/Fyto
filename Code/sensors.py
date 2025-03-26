@@ -14,6 +14,7 @@ import sys
 
 import RPi.GPIO as GPIO # type: ignore
 from datetime import datetime
+from astral.geocoder import database, lookup
 from astral import LocationInfo
 from astral.sun import sun
 # Setup logging
@@ -39,8 +40,6 @@ LDR_channel = AnalogIn(ads, ADS.P2)
 #LM35_channel = AnalogIn(ads, ADS.P3)
 # Set up the backlight pin
 BACKLIGHT_PIN = 18
-# set location for sunrise and sunset
-city = LocationInfo("Berlin", "Germany", "Europe/Berlin", 52.52, 13.405)
 
 # set GPIO mode
 GPIO.setmode(GPIO.BCM)
@@ -86,6 +85,21 @@ RECONNECT_RATE = 2
 MAX_RECONNECT_COUNT = 12
 MAX_RECONNECT_DELAY = 60
 
+def get_location(city_name):
+    """
+    Retrieves the LocationInfo for a given city.
+    
+    :param city_name: Name of the city as a string
+    :return: LocationInfo object or None if the city is not found
+    """
+    try:
+        # Look up the city in the Astral database
+        location = lookup(city_name, database())
+        return location
+    except KeyError:
+        # Print an error message if the city is not found
+        print(f"Error: The city '{city_name}' was not found.")
+        return None
 
 def backlight_on():
     """Switches the backlight ON"""
@@ -145,7 +159,8 @@ def on_disconnect(client, userdata, rc):
         reconnect_count += 1
     _LOGGER.info("Reconnect failed after %s attempts. Exiting...", reconnect_count)
 
-
+# location info
+city = get_location(cfg['location'])#"Berlin"
 #Setup Client for communication
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('0.0.0.0', 5050))
