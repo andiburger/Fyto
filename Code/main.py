@@ -11,6 +11,7 @@ import json
 import subprocess
 from threading import Thread
 import time
+import argparse
 
 
 # path to sensors script
@@ -23,6 +24,8 @@ config_data = {}
 cfg_server_process = None
 sensor_server_process = None
 
+server = None
+
 # Raspberry Pi pin configuration:
 RST = 27
 DC = 25
@@ -31,12 +34,6 @@ bus = 0
 device = 0 
 logging.basicConfig(level=logging.DEBUG)
 directory = os.getcwd()
-
-#Server For Data Reception
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(('0.0.0.0', 5050))
-server.listen(2)
-
 doInterrupt = 0
 showOn = 0
 
@@ -77,27 +74,32 @@ def show(emotion):
         logging.info("quit:")
         exit()
 
-def main():
+def main(args):
     global doInterrupt, showOn
+    #Server For Data Reception
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(('0.0.0.0', args.port_com))
+    server.listen(2)
+    logging.info("Socket server started")
     # Start the Flask server detached
     logging.info("Starting Flask server")
     if is_venv():
         logging.info("Running in virtual environment")
-        cfg_server_process = subprocess.Popen([sys.executable, "-m", "waitress", "--host=0.0.0.0", "--port=5000", "config_server:app"])
+        cfg_server_process = subprocess.Popen([sys.executable, "-m", "waitress", "--host=0.0.0.0", "--port="+args.port_cfg_server, "config_server:app"])
     elif is_virtualenv():
         logging.info("Running in virtual environment")
-        cfg_server_process = subprocess.Popen([getattr(sys, "real_prefix", sys.prefix), "-m", "waitress", "--host=0.0.0.0", "--port=5000", "config_server:app"])
+        cfg_server_process = subprocess.Popen([getattr(sys, "real_prefix", sys.prefix), "-m", "waitress", "--host=0.0.0.0", "--port="+args.port_cfg_server, "config_server:app"])
     else:
         logging.info("Running in global environment")
         cfg_server_process = subprocess.Popen(
-        ["waitress-serve", "--host=0.0.0.0", "--port=5000", "config_server:app"],
+        ["waitress-serve", "--host=0.0.0.0", "--port="+args.port_cfg_server, "config_server:app"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
         )   
     logging.info("Flask server started")
 
     # Wait until the Flask server has a valid configuration
-    url = 'http://127.0.0.1:5000/get_config'
+    url = 'http://127.0.0.1:'+args.port_cfg_server+'/get_config'
     while True:
         try:
             response = requests.get(url)
@@ -115,7 +117,8 @@ def main():
         time.sleep(1)
 
     logging.info("Valid configuration received")
-
+    if type(config_data) is dict:
+        config_data.update({"Port": args.port_com})
     # start sensors script detached
     logging.info("Starting sensors script")
     config_json = json.dumps(config_data) 
@@ -155,7 +158,11 @@ def main():
                 
 if __name__=='__main__':
     try:
-        main()
+        parser = argparse.ArgumentParser(description="Start the server with a specific port.")
+        parser.add_argument("--port-cfg-server", type=int, default=5000, help="Port number to run the server on")
+        parser.add_argument("--port-com", type=int, default=5050, help="Port number to run the communication between sensors and main script")
+        args = parser.parse_args()
+        main(args.port_cfg_server, args.port_com)
     except KeyboardInterrupt:
         logging.info("Exiting...")
         if cfg_server_process:

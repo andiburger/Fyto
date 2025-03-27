@@ -171,7 +171,7 @@ else:
     _LOGGER.error(f"Failed to send message to topic {cmd_topic}")
 #Setup Client for communication
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('0.0.0.0', 5050))
+client.connect(('0.0.0.0', int(cfg['Port'])))
 
 #Connect to MQTT
 mqtt_client = connect_mqtt()

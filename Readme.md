@@ -160,9 +160,25 @@ This could be used to verify the wiring is correct and the sensors measure plaus
 
 ### **Start the Main Program**
 The `main.py` script starts the configuration server and sensor system as subprocesses.
-```sh
-python main.py
+- **Configuration Server Port (`--port-cfg-server`)**: The port the config server runs on (default: `5000`).
+- **Communication Port (`--port-com`)**: Manages communication between sensors and the main script (default: `5050`).
+
+The `main.py` script also ensures proper shutdown by handling `KeyboardInterrupt` (Ctrl+C), stopping the server and sensor processes gracefully.
+
+### Usage
+Run the script using the following command:
+```bash
+python main.py --port-cfg-server 5000 --port-com 5050
 ```
+You can also omit the parameters to use the default values.
+
+### Shutdown Handling
+If the script receives a `KeyboardInterrupt`, it will:
+1. Log the shutdown process.
+2. Terminate the Flask server (`cfg_server_process`).
+3. Terminate the sensor script (`sensor_server_process`).
+4. Close the socket server.
+5. Exit gracefully.
 
 ### **Configure Smart Pot via Configuration Server**
 Open a web browser and connect to the configuration server with the following address: `https://PI-ZERO-IP-ADDR:5000`
@@ -171,14 +187,14 @@ Open a web browser and connect to the configuration server with the following ad
 
 Set the parameter as shown in the screenshot above. MQTT User and Password are optional.
 The following parameter can be used as default for light intensity, temperature and moisture:
-- Light intensity min: 20
-- Light intensity max: 20
+- Light intensity min: 0
+- Light intensity max: 5000
 
-- Temperature min: 22
+- Temperature min: 18
 - Temperature max: 30
 
 - Moisture min: 10
-- Moisture max: 90
+- Moisture max: 130
 
 Then press the button save.
 You should now see values for Light, Temperature and Moisture published on the given topic on your MQTT server. This means your smart pot is up and running. Additionally the LCD display shows you the current state of your plant, visualized with some simleys.
@@ -202,4 +218,3 @@ The following parameters can be set via the `/config` endpoint:
 
 ## License
 This project is licensed under the MIT License.
-
