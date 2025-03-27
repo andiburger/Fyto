@@ -175,9 +175,9 @@ last_execution_time = time.time()
 while True:
     sunrise, sunset = get_sun_times()
     now = datetime.now().time()
-    if sunrise <= now <= sunset:
+    if now >= sunrise:
         backlight_on()  # during the day, backlight ON
-    else:
+    elif now <= sunset:
         backlight_off()  # at night, backlight OFF
     # Read the specified ADC channels using the previously set gain value.
     LDR_Value = LDR_channel.value
