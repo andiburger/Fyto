@@ -73,6 +73,7 @@ Moisture_max = int(cfg['Moisture max'])#90
 broker = cfg['MQTT Host']#'192.168.178.160'
 port = int(cfg['MQTT Port'])#1883
 topic = cfg['MQTT Topic']#"smart_pot/data"
+cmd_topic = topic + "/cmd"
 try:
     update_interval = int(cfg['MQTT Update Interval'])#360
 except:
@@ -161,6 +162,13 @@ def on_disconnect(client, userdata, rc):
 
 # location info
 city = get_location(cfg['Location'])#"Berlin"
+MQTT_MSG = json.dumps({"location": city.name})
+result = mqtt_client.publish(cmd_topic, MQTT_MSG)
+status = result[0]
+if status == 0:
+    _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{cmd_topic}`")
+else:      
+    _LOGGER.error(f"Failed to send message to topic {cmd_topic}")
 #Setup Client for communication
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('0.0.0.0', 5050))
@@ -176,9 +184,17 @@ while True:
     sunrise, sunset = get_sun_times()
     now = datetime.now().time()
     if now >= sunrise:
+        MQTT_MSG = json.dumps({"backlight": "on"})
         backlight_on()  # during the day, backlight ON
     elif now <= sunset:
+        MQTT_MSG = json.dumps({"backlight": "off"})
         backlight_off()  # at night, backlight OFF
+    result = mqtt_client.publish(cmd_topic, MQTT_MSG)
+    status = result[0]
+    if status == 0:
+        _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{cmd_topic}`")
+    else:      
+        _LOGGER.error(f"Failed to send message to topic {cmd_topic}")
     # Read the specified ADC channels using the previously set gain value.
     LDR_Value = LDR_channel.value
     LDR_Percent = _map(LDR_Value, 22500, 50, 0, 100)
