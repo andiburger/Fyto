@@ -160,7 +160,7 @@ def on_disconnect(client, userdata, rc):
     _LOGGER.info("Reconnect failed after %s attempts. Exiting...", reconnect_count)
 
 # location info
-city = get_location(cfg['location'])#"Berlin"
+city = get_location(cfg['Location'])#"Berlin"
 #Setup Client for communication
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('0.0.0.0', 5050))
