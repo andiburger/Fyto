@@ -13,6 +13,10 @@ from threading import Thread
 import time
 import argparse
 
+from datetime import datetime
+from astral.geocoder import database, lookup
+from astral import LocationInfo
+from astral.sun import sun
 
 # path to sensors script
 script_path = 'sensors.py'
@@ -36,13 +40,49 @@ logging.basicConfig(level=logging.DEBUG)
 directory = os.getcwd()
 doInterrupt = 0
 showOn = 0
+city = None
+sunrise = None
+sunset = None
 
+
+"""MQTT_MSG = json.dumps({"location": city.name})
+result = mqtt_client.publish(cmd_topic, MQTT_MSG)
+status = result[0]
+if status == 0:
+    _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{cmd_topic}`")
+else:      
+    _LOGGER.error(f"Failed to send message to topic {cmd_topic}")
+"""
 
 def is_venv():
     return sys.prefix != sys.base_prefix  
 
 def is_virtualenv():
     return hasattr(sys, "real_prefix") 
+
+def get_location(city_name):
+    """
+    Retrieves the LocationInfo for a given city.
+    
+    :param city_name: Name of the city as a string
+    :return: LocationInfo object or None if the city is not found
+    """
+    try:
+        # Look up the city in the Astral database
+        location = lookup(city_name, database())
+        return location
+    except KeyError:
+        # Print an error message if the city is not found
+        print(f"Error: The city '{city_name}' was not found.")
+        return None
+
+
+def get_sun_times(city):
+    """Get the sunrise and sunset times"""
+    s = sun(city.observer, date=datetime.now())
+    sunrise = s["sunrise"].time()  # sunrise
+    sunset = s["sunset"].time()  # sunset
+    return sunrise, sunset
 
 
 def show(emotion):
@@ -51,6 +91,14 @@ def show(emotion):
     try:
         disp = LCD_2inch.LCD_2inch(spi=SPI.SpiDev(bus, device),spi_freq=90000000,rst=RST,dc=DC,bl=BL)
         disp.Init() # Initialize library.
+        now = datetime.now().time()
+        if now >= sunrise:
+            disp.bl_DutyCycle(50)  # Set the backlight to 100
+            logging.info("Backlight set to 100")
+        elif now <= sunset:
+            disp.bl_DutyCycle(0)  # Set the backlight to 0
+            logging.info("Backlight set to 0")
+            return
         #disp.clear() # Clear display.
         bg = Image.new("RGB", (disp.width, disp.height), "BLACK")
         draw = ImageDraw.Draw(bg)
@@ -111,6 +159,9 @@ def main(args):
                 if all(value != "" or key in excluded_keys for key, value in config_data.items()):
                     logging.info("Valid configuration received")
                     break
+                # location info
+                city = get_location(config_data['Location'])#"Berlin"
+                sunrise,sunset = get_sun_times(city=city)
             logging.info("Waiting for valid configuration...")
         except requests.exceptions.ConnectionError:
             logging.info("Waiting for Flask server to start...")
