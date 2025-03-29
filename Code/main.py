@@ -85,21 +85,21 @@ def main(args):
     logging.info("Starting Flask server")
     if is_venv():
         logging.info("Running in virtual environment")
-        cfg_server_process = subprocess.Popen([sys.executable, "-m", "waitress", "--host=0.0.0.0", "--port="+args.port_cfg_server, "config_server:app"])
+        cfg_server_process = subprocess.Popen([sys.executable, "-m", "waitress", "--host=0.0.0.0", "--port="+str(args.port_cfg_server), "config_server:app"])
     elif is_virtualenv():
         logging.info("Running in virtual environment")
-        cfg_server_process = subprocess.Popen([getattr(sys, "real_prefix", sys.prefix), "-m", "waitress", "--host=0.0.0.0", "--port="+args.port_cfg_server, "config_server:app"])
+        cfg_server_process = subprocess.Popen([getattr(sys, "real_prefix", sys.prefix), "-m", "waitress", "--host=0.0.0.0", "--port="+str(args.port_cfg_server), "config_server:app"])
     else:
         logging.info("Running in global environment")
         cfg_server_process = subprocess.Popen(
-        ["waitress-serve", "--host=0.0.0.0", "--port="+args.port_cfg_server, "config_server:app"],
+        ["waitress-serve", "--host=0.0.0.0", "--port="+str(args.port_cfg_server), "config_server:app"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
         )   
     logging.info("Flask server started")
 
     # Wait until the Flask server has a valid configuration
-    url = 'http://127.0.0.1:'+args.port_cfg_server+'/get_config'
+    url = 'http://127.0.0.1:'+str(args.port_cfg_server)+'/get_config'
     while True:
         try:
             response = requests.get(url)
