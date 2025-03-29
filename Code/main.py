@@ -162,7 +162,7 @@ if __name__=='__main__':
         parser.add_argument("--port-cfg-server", type=int, default=5000, help="Port number to run the server on")
         parser.add_argument("--port-com", type=int, default=5050, help="Port number to run the communication between sensors and main script")
         args = parser.parse_args()
-        main(args.port_cfg_server, args.port_com)
+        main(args)
     except KeyboardInterrupt:
         logging.info("Exiting...")
         if cfg_server_process:
