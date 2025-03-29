@@ -160,6 +160,15 @@ def on_disconnect(client, userdata, rc):
         reconnect_count += 1
     _LOGGER.info("Reconnect failed after %s attempts. Exiting...", reconnect_count)
 
+#Setup Client for communication
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(('0.0.0.0', int(cfg['Port'])))
+
+#Connect to MQTT
+mqtt_client = connect_mqtt()
+mqtt_client.on_disconnect = on_disconnect
+mqtt_client.loop_start()
+
 # location info
 city = get_location(cfg['Location'])#"Berlin"
 MQTT_MSG = json.dumps({"location": city.name})
@@ -169,14 +178,6 @@ if status == 0:
     _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{cmd_topic}`")
 else:      
     _LOGGER.error(f"Failed to send message to topic {cmd_topic}")
-#Setup Client for communication
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('0.0.0.0', int(cfg['Port'])))
-
-#Connect to MQTT
-mqtt_client = connect_mqtt()
-mqtt_client.on_disconnect = on_disconnect
-mqtt_client.loop_start()
 
 MQTT_MSG = ""
 last_execution_time = time.time() 
