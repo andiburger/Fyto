@@ -74,6 +74,7 @@ broker = cfg['MQTT Host']#'192.168.178.160'
 port = int(cfg['MQTT Port'])#1883
 topic = cfg['MQTT Topic']#"smart_pot/data"
 cmd_topic = topic + "/cmd"
+loc_topic = topic + "/location"
 try:
     update_interval = int(cfg['MQTT Update Interval'])#360
 except:
@@ -172,12 +173,12 @@ mqtt_client.loop_start()
 # location info
 city = get_location(cfg['Location'])#"Berlin"
 MQTT_MSG = json.dumps({"location": city.name})
-result = mqtt_client.publish(cmd_topic, MQTT_MSG)
+result = mqtt_client.publish(loc_topic, MQTT_MSG)
 status = result[0]
 if status == 0:
-    _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{cmd_topic}`")
+    _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{loc_topic}`")
 else:      
-    _LOGGER.error(f"Failed to send message to topic {cmd_topic}")
+    _LOGGER.error(f"Failed to send message to topic {loc_topic}")
 
 MQTT_MSG = ""
 last_execution_time = time.time() 
