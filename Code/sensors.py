@@ -217,7 +217,7 @@ while True:
         else:      
             _LOGGER.error(f"Failed to send message to topic {topic}")
         last_execution_time = current_time
-    if (LDR_Percent < LDR_Percent_max):
+    if (LDR_Percent < LDR_Percent_min):
         if(LowIn_DataSent == 0):
             #client.connect(('0.0.0.0', 8080))
             _LOGGER.info("Sending sleepy")
