@@ -197,12 +197,6 @@ try:
             backlight_on()
         else:
             backlight_off()
-        result = mqtt_client.publish(cmd_topic, MQTT_MSG)
-        status = result[0]
-        if status == 0:
-            _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{cmd_topic}`")
-        else:      
-            _LOGGER.error(f"Failed to send message to topic {cmd_topic}")
         # Read the specified ADC channels using the previously set gain value.
         LDR_Value = LDR_channel.value
         LDR_Percent = _map(LDR_Value, 22500, 50, 0, 100)
