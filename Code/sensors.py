@@ -14,9 +14,9 @@ import sys
 
 import RPi.GPIO as GPIO # type: ignore
 from datetime import datetime
-from astral.geocoder import database, lookup
-from astral import LocationInfo
-from astral.sun import sun
+from sun_logic import get_location, get_sun_times
+from mqtt_client import connect_mqtt, on_disconnect
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
@@ -87,22 +87,6 @@ RECONNECT_RATE = 2
 MAX_RECONNECT_COUNT = 12
 MAX_RECONNECT_DELAY = 60
 
-def get_location(city_name):
-    """
-    Retrieves the LocationInfo for a given city.
-    
-    :param city_name: Name of the city as a string
-    :return: LocationInfo object or None if the city is not found
-    """
-    try:
-        # Look up the city in the Astral database
-        location = lookup(city_name, database())
-        return location
-    except KeyError:
-        # Print an error message if the city is not found
-        print(f"Error: The city '{city_name}' was not found.")
-        return None
-
 def backlight_on():
     """Switches the backlight ON"""
     GPIO.output(BACKLIGHT_PIN, GPIO.HIGH)
@@ -113,54 +97,10 @@ def backlight_off():
     GPIO.output(BACKLIGHT_PIN, GPIO.LOW)
     _LOGGER.info("backlight OFF")
 
-def get_sun_times():
-    """Get the sunrise and sunset times"""
-    s = sun(city.observer, date=datetime.now())
-    sunrise = s["sunrise"].time()  # sunrise
-    sunset = s["sunset"].time()  # sunset
-    return sunrise, sunset
-
 
 # Map function
 def _map(x, in_min, in_max, out_min, out_max):
     return int((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
-
-# Connect to MQTT
-def connect_mqtt():
-    def on_connect(client, userdata, flags, rc):
-        if rc == 0:
-            _LOGGER.info("Connected to MQTT Broker!")
-        else:
-            _LOGGER.error("Failed to connect, return code %d\n", rc)
-    # Set Connecting Client ID
-    client = mqtt_client.Client(client_id)
-
-    if username:
-        client.username_pw_set(username, password)
-    client.on_connect = on_connect
-    client.connect(broker, port)
-    return client
-
-# Disconnect Callback
-def on_disconnect(client, userdata, rc):
-    _LOGGER.info("Disconnected with result code: %s", rc)
-    reconnect_count, reconnect_delay = 0, FIRST_RECONNECT_DELAY
-    while reconnect_count < MAX_RECONNECT_COUNT:
-        _LOGGER.info("Reconnecting in %d seconds...", reconnect_delay)
-        time.sleep(reconnect_delay)
-
-        try:
-            client.reconnect()
-            _LOGGER.info("Reconnected successfully!")
-            return
-        except Exception as err:
-            _LOGGER.error("%s. Reconnect failed. Retrying...", err)
-
-        reconnect_delay *= RECONNECT_RATE
-        reconnect_delay = min(reconnect_delay, MAX_RECONNECT_DELAY)
-        reconnect_count += 1
-    _LOGGER.info("Reconnect failed after %s attempts. Exiting...", reconnect_count)
-
 try:
     #Setup Client for communication
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -38,6 +38,9 @@ User=$USER
 WorkingDirectory=$PROJECT_DIR
 ExecStart=$VENV_DIR/bin/python $PROJECT_DIR/main.py
 Restart=always
+Environment=PATH=$VENV_DIR/bin:$PATH
+Environment=VIRTUAL_ENV=$VENV_DIR
+Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target
