@@ -1,0 +1,16 @@
+[Unit]
+Description=Smart Plant Pot Service
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/Fyto/Code
+ExecStart=/home/pi/Fyto/Code/env/bin/python /home/pi/Fyto/Code/main.py
+Restart=on-failure
+Environment=PATH=/home/pi/Fyto/Code/env/bin:$PATH
+Environment=VIRTUAL_ENV=/home/pi/Fyto/Code/env
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
