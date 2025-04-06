@@ -161,126 +161,151 @@ def on_disconnect(client, userdata, rc):
         reconnect_count += 1
     _LOGGER.info("Reconnect failed after %s attempts. Exiting...", reconnect_count)
 
-#Setup Client for communication
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('0.0.0.0', int(cfg['Port'])))
+try:
+    #Setup Client for communication
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(('0.0.0.0', int(cfg['Port'])))
 
-#Connect to MQTT
-mqtt_client = connect_mqtt()
-mqtt_client.on_disconnect = on_disconnect
-mqtt_client.loop_start()
+    #Connect to MQTT
+    mqtt_client = connect_mqtt()
+    mqtt_client.on_disconnect = on_disconnect
+    mqtt_client.loop_start()
 
-# location info
-city = get_location(cfg['Location'])#"Berlin"
-MQTT_MSG = json.dumps({"location": city.name})
-result = mqtt_client.publish(loc_topic, MQTT_MSG)
-status = result[0]
-if status == 0:
-    _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{loc_topic}`")
-else:      
-    _LOGGER.error(f"Failed to send message to topic {loc_topic}")
-
-MQTT_MSG = ""
-last_execution_time = time.time() 
-while True:
-    sunrise, sunset = get_sun_times()
-    now = datetime.now().time()
-    if now >= sunrise:
-        MQTT_MSG = json.dumps({"backlight": "on"})
-        backlight_on()  # during the day, backlight ON
-    elif now <= sunset:
-        MQTT_MSG = json.dumps({"backlight": "off"})
-        backlight_off()  # at night, backlight OFF
-    result = mqtt_client.publish(cmd_topic, MQTT_MSG)
+    # location info
+    city = get_location(cfg['Location'])#"Berlin"
+    MQTT_MSG = json.dumps({"location": city.name})
+    result = mqtt_client.publish(loc_topic, MQTT_MSG)
     status = result[0]
     if status == 0:
-        _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{cmd_topic}`")
+        _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{loc_topic}`")
     else:      
-        _LOGGER.error(f"Failed to send message to topic {cmd_topic}")
-    # Read the specified ADC channels using the previously set gain value.
-    LDR_Value = LDR_channel.value
-    LDR_Percent = _map(LDR_Value, 22500, 50, 0, 100)
-    Moisture_Value = Moisture_channel.value
-    Moisture_Percent = _map(Moisture_Value, 31000, 15500, 0, 100)
-    #ads_ch0 = LM35_channel.value
-    #ads_Voltage_ch0 = ads_ch0 * ads_bit_Voltage
-    Temperature =  temp_sensor.get_temperature()
-    _LOGGER.info(f"Temperature: {Temperature:.2f} °C")
-    _LOGGER.info(f"Light Intensity : {LDR_Percent} %")
-    _LOGGER.info(f"Moisture :{Moisture_Percent:.2f} %")
-    current_time = time.time()
-    if current_time - last_execution_time >= update_interval:
-        MQTT_MSG=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
-        #send only every 360 seconds
-        result = mqtt_client.publish(topic, MQTT_MSG)
+        _LOGGER.error(f"Failed to send message to topic {loc_topic}")
+
+    MQTT_MSG = ""
+    last_execution_time = time.time()
+    last_sun_calc_date = datetime.now().date()
+    sunrise, sunset = get_sun_times()
+    while True:
+        now = datetime.now()
+        # Check if the current date is different from the last calculated date
+        # If it is, recalculate sunrise and sunset times
+        if now.date() != last_sun_calc_date:
+            sunrise, sunset = get_sun_times()
+            last_sun_calc_date = now.date()
+            _LOGGER.info(f"Recalculated sunrise/sunset for {last_sun_calc_date}")
+        if sunrise <= now.time() <= sunset:
+            backlight_on()
+        else:
+            backlight_off()
+        result = mqtt_client.publish(cmd_topic, MQTT_MSG)
         status = result[0]
         if status == 0:
-            _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{topic}`")
+            _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{cmd_topic}`")
         else:      
-            _LOGGER.error(f"Failed to send message to topic {topic}")
-        last_execution_time = current_time
-    if (LDR_Percent < LDR_Percent_min):
-        if(LowIn_DataSent == 0):
-            #client.connect(('0.0.0.0', 8080))
-            _LOGGER.info("Sending sleepy")
-            client.send(bytes('sleepy\n','utf-8'))
-            #client.close()
-            HighIn_DataSent = 0
-            LowIn_DataSent = 1
-    elif (LDR_Percent > LDR_Percent_min):
-        if(HighIn_DataSent == 0):
-            print("High Intensity")
-            #client.connect(('0.0.0.0', 8080))
-            _LOGGER.info("Sending happy")
-            client.send(bytes('happy\n','utf-8'))
-            #client.close()
-            HighIn_DataSent = 1
-            LowIn_DataSent = 0
-        
-    if (Moisture_Percent < Moisture_min):
-        Moisture_Recent = Moisture_Percent
-        if(Thirsty_DataSent == 0):
-            #client.connect(('0.0.0.0', 8080))
-            _LOGGER.info("Sending thirsty")
-            client.send(bytes('thirsty\n','utf-8'))
-            #client.close()
-            Thirsty_DataSent = 1
-            Savory_DataSent = 0
-            Happy_DataSent = 0
-    elif (Moisture_Percent>Moisture_min and Moisture_Recent < Moisture_Percent and Moisture_Percent < Moisture_max):
-        Moisture_Recent = Moisture_Percent
-        if(Savory_DataSent == 0):
-            #client.connect(('0.0.0.0', 8080))
-            _LOGGER.info("Sending savory")
-            client.send(bytes('savory\n','utf-8'))
-            #client.close()
-            Savory_DataSent = 1
-            Thirsty_DataSent = 0
-            Happy_DataSent = 0
-    elif (Moisture_Percent > Moisture_max):
-        Moisture_Recent = Moisture_Percent
-        if(Happy_DataSent == 0):
-            #client.connect(('0.0.0.0', 8080))
-            _LOGGER.info("Sending savory")
-            client.send(bytes('savory\n','utf-8'))
-            #client.close()
-            Happy_DataSent = 1
-            Savory_DataSent = 0
-            Thirsty_DataSent = 0
+            _LOGGER.error(f"Failed to send message to topic {cmd_topic}")
+        # Read the specified ADC channels using the previously set gain value.
+        LDR_Value = LDR_channel.value
+        LDR_Percent = _map(LDR_Value, 22500, 50, 0, 100)
+        Moisture_Value = Moisture_channel.value
+        Moisture_Percent = _map(Moisture_Value, 31000, 15500, 0, 100)
+        Temperature =  temp_sensor.get_temperature()
+        _LOGGER.info(f"Temperature: {Temperature:.2f} °C")
+        _LOGGER.info(f"Light Intensity : {LDR_Percent} %")
+        _LOGGER.info(f"Moisture :{Moisture_Percent:.2f} %")
+        current_time = time.time()
+        if current_time - last_execution_time >= update_interval:
+            MQTT_MSG=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
+            #send only every 360 seconds
+            result = mqtt_client.publish(topic, MQTT_MSG)
+            status = result[0]
+            if status == 0:
+                _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{topic}`")
+            else:      
+                _LOGGER.error(f"Failed to send message to topic {topic}")
+            last_execution_time = current_time
+        if (LDR_Percent < LDR_Percent_min):
+            if(LowIn_DataSent == 0):
+                #client.connect(('0.0.0.0', 8080))
+                _LOGGER.info("Sending sleepy")
+                client.send(bytes('sleepy\n','utf-8'))
+                #client.close()
+                HighIn_DataSent = 0
+                LowIn_DataSent = 1
+        elif (LDR_Percent > LDR_Percent_min):
+            if(HighIn_DataSent == 0):
+                print("High Intensity")
+                #client.connect(('0.0.0.0', 8080))
+                _LOGGER.info("Sending happy")
+                client.send(bytes('happy\n','utf-8'))
+                #client.close()
+                HighIn_DataSent = 1
+                LowIn_DataSent = 0
+            
+        if (Moisture_Percent < Moisture_min):
+            Moisture_Recent = Moisture_Percent
+            if(Thirsty_DataSent == 0):
+                #client.connect(('0.0.0.0', 8080))
+                _LOGGER.info("Sending thirsty")
+                client.send(bytes('thirsty\n','utf-8'))
+                #client.close()
+                Thirsty_DataSent = 1
+                Savory_DataSent = 0
+                Happy_DataSent = 0
+        elif (Moisture_Percent>Moisture_min and Moisture_Recent < Moisture_Percent and Moisture_Percent < Moisture_max):
+            Moisture_Recent = Moisture_Percent
+            if(Savory_DataSent == 0):
+                #client.connect(('0.0.0.0', 8080))
+                _LOGGER.info("Sending savory")
+                client.send(bytes('savory\n','utf-8'))
+                #client.close()
+                Savory_DataSent = 1
+                Thirsty_DataSent = 0
+                Happy_DataSent = 0
+        elif (Moisture_Percent > Moisture_max):
+            Moisture_Recent = Moisture_Percent
+            if(Happy_DataSent == 0):
+                #client.connect(('0.0.0.0', 8080))
+                _LOGGER.info("Sending savory")
+                client.send(bytes('savory\n','utf-8'))
+                #client.close()
+                Happy_DataSent = 1
+                Savory_DataSent = 0
+                Thirsty_DataSent = 0
 
-    if(Temperature>Temperature_max):
-        if(TemperatureDataSent == 0):
-            #client.connect(('0.0.0.0', 8080))
-            _LOGGER.info("Sending hot")
-            client.send(bytes('hot\n','utf-8'))
-            #client.close()
-            TemperatureDataSent = 1
-    elif(Temperature<Temperature_min):
-        if(TemperatureDataSent == 0):
-            #client.connect(('0.0.0.0', 8080))
-            _LOGGER.info("Sending freeze")
-            client.send(bytes('freeze\n','utf-8'))
-            #client.close()
-            TemperatureDataSent = 1
-    else:
-            TemperatureDataSent = 0
+        if(Temperature>Temperature_max):
+            if(TemperatureDataSent == 0):
+                #client.connect(('0.0.0.0', 8080))
+                _LOGGER.info("Sending hot")
+                client.send(bytes('hot\n','utf-8'))
+                #client.close()
+                TemperatureDataSent = 1
+        elif(Temperature<Temperature_min):
+            if(TemperatureDataSent == 0):
+                #client.connect(('0.0.0.0', 8080))
+                _LOGGER.info("Sending freeze")
+                client.send(bytes('freeze\n','utf-8'))
+                #client.close()
+                TemperatureDataSent = 1
+        else:
+                TemperatureDataSent = 0
+        time.sleep(1)
+except KeyboardInterrupt:
+    _LOGGER.info("Script interrupted by user (Ctrl+C). Cleaning up...")
+
+except Exception as e:
+    _LOGGER.exception(f"Unexpected error: {e}")
+finally:
+    try:
+        mqtt_client.loop_stop()
+        mqtt_client.disconnect()
+    except Exception as e:
+        _LOGGER.warning(f"MQTT cleanup failed: {e}")
+    try:
+        client.close()
+    except Exception as e:
+        _LOGGER.warning(f"Socket cleanup failed: {e}")
+    try:
+        GPIO.cleanup()
+    except Exception as e:
+        _LOGGER.warning(f"GPIO cleanup failed: {e}")
+    _LOGGER.info("Cleanup done. Exiting.") 

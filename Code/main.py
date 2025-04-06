@@ -60,10 +60,9 @@ def show(emotion):
                 doInterrupt = 0
                 break
             else:
-                print(directory+'/emotion/'+emotion+'/frame'+str(i)+'.png')
-                image = Image.open(directory+'/emotion/'+emotion+'/frame'+str(i)+'.png')	
-                image = image.rotate(180)
-                disp.ShowImage(image)
+                with Image.open(directory+'/emotion/'+emotion+'/frame'+str(i)+'.png') as image:
+                    image = image.rotate(180)
+                    disp.ShowImage(image)
         showOn = 0
         disp.module_exit()
         logging.info("quit:")
@@ -75,7 +74,7 @@ def show(emotion):
         exit()
 
 def main(args):
-    global doInterrupt, showOn
+    global doInterrupt, showOn, cfg_server_process, sensor_server_process, server
     #Server For Data Reception
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(('0.0.0.0', args.port_com))
