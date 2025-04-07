@@ -12,6 +12,7 @@ import subprocess
 from threading import Thread
 import time
 import argparse
+from threading import Thread
 
 
 # path to sensors script
@@ -37,6 +38,7 @@ directory = os.getcwd()
 doInterrupt = 0
 showOn = 0
 
+show_thread = None
 
 def is_venv():
     return sys.prefix != sys.base_prefix  
@@ -45,24 +47,48 @@ def is_virtualenv():
     return hasattr(sys, "real_prefix") 
 
 
+def show_async(emotion):
+    global show_thread, doInterrupt
+
+    def run_show():
+        show(emotion)
+
+    # Unterbreche vorherige Animation
+    doInterrupt = 1
+    if show_thread and show_thread.is_alive():
+        show_thread.join()
+
+    doInterrupt = 0
+    show_thread = Thread(target=run_show)
+    show_thread.start()
+
 def show(emotion):
+
     global doInterrupt, showOn, disp
     logging.info("emotion:" + emotion)
     try:
-        disp = LCD_2inch.LCD_2inch(spi=SPI.SpiDev(bus, device),spi_freq=90000000,rst=RST,dc=DC,bl=BL)
-        disp.Init() # Initialize library.
-        #disp.clear() # Clear display.
+        disp = LCD_2inch.LCD_2inch(spi=SPI.SpiDev(bus, device), spi_freq=90000000, rst=RST, dc=DC, bl=BL)
+        disp.Init()  # Initialize library.
+
+        if emotion == "black": # set display to black
+            bg = Image.new("RGB", (disp.width, disp.height), "BLACK")
+            disp.ShowImage(bg)
+            disp.module_exit()
+            logging.info("Display set to black")
+            return
+
         bg = Image.new("RGB", (disp.width, disp.height), "BLACK")
         draw = ImageDraw.Draw(bg)
-        # display with hardware SPI:
+        
         for i in range(180):
-            if (doInterrupt==1):
+            if doInterrupt == 1:
                 doInterrupt = 0
                 break
             else:
-                with Image.open(directory+'/emotion/'+emotion+'/frame'+str(i)+'.png') as image:
+                with Image.open(directory + '/emotion/' + emotion + '/frame' + str(i) + '.png') as image:
                     image = image.rotate(180)
                     disp.ShowImage(image)
+        
         showOn = 0
         disp.module_exit()
         logging.info("quit:")
@@ -132,7 +158,7 @@ def main(args):
         sensor_server_process = subprocess.Popen([sys.executable, script_path, config_json])
     # sensors script will send data to this server
     previousData = 'happy'
-    show('happy')
+    show_async('happy')
     conn, addr = server.accept()
     conn.settimeout(0.1)
     while True:
@@ -148,10 +174,10 @@ def main(args):
                 print(data)
                 doInterrupt = 1
                 previousData = data
-                show(data)
+                show_async(data)
         except socket.timeout:
             if showOn!=1:
-                show(previousData)
+                show_async(previousData)
                 
 
                 

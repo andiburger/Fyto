@@ -127,16 +127,20 @@ try:
     sunrise, sunset = get_sun_times()
     while True:
         now = datetime.now()
+        now = datetime.now()
         # Check if the current date is different from the last calculated date
-        # If it is, recalculate sunrise and sunset times
         if now.date() != last_sun_calc_date:
             sunrise, sunset = get_sun_times()
             last_sun_calc_date = now.date()
             _LOGGER.info(f"Recalculated sunrise/sunset for {last_sun_calc_date}")
-        if sunrise <= now.time() <= sunset:
+
+        is_daytime = sunrise <= now.time() <= sunset
+        if is_daytime:
             backlight_on()
         else:
             backlight_off()
+            client.send(bytes('black\n', 'utf-8'))  # oder 'blank\n', je nachdem wie du es im showimage/show behandelst
+            continue # Skip the rest of the loop if it's nighttime
         # Read the specified ADC channels using the previously set gain value.
         LDR_Value = LDR_channel.value
         LDR_Percent = _map(LDR_Value, 22500, 50, 0, 100)
