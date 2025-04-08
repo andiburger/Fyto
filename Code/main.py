@@ -50,18 +50,18 @@ def is_virtualenv():
 last_emotion = None
 
 def show_async(emotion):
-    global show_thread, doInterrupt, last_emotion
+    global show_thread, doInterrupt, last_emotion, showOn
 
-    if emotion == last_emotion:
-        return  
-
-    last_emotion = emotion
+    if emotion == last_emotion and showOn == 1:
+        return
 
     if show_thread and show_thread.is_alive():
         doInterrupt = 1
         show_thread.join()
 
     doInterrupt = 0
+    showOn = 1
+    last_emotion = emotion
     show_thread = Thread(target=show, args=(emotion,))
     show_thread.start()
 
