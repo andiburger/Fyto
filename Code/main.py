@@ -85,6 +85,7 @@ def show(emotion):
         
         for i in range(180):
             if doInterrupt == 1:
+                logging.info("Interrupted during emotion display")
                 doInterrupt = 0
                 break
             else:
