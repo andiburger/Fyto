@@ -47,19 +47,22 @@ def is_virtualenv():
     return hasattr(sys, "real_prefix") 
 
 
+last_emotion = None
+
 def show_async(emotion):
-    global show_thread, doInterrupt
+    global show_thread, doInterrupt, last_emotion
 
-    def run_show():
-        show(emotion)
+    if emotion == last_emotion:
+        return  
 
-    # Unterbreche vorherige Animation
-    doInterrupt = 1
+    last_emotion = emotion
+
     if show_thread and show_thread.is_alive():
+        doInterrupt = 1
         show_thread.join()
 
     doInterrupt = 0
-    show_thread = Thread(target=run_show)
+    show_thread = Thread(target=show, args=(emotion,))
     show_thread.start()
 
 def show(emotion):
@@ -158,7 +161,7 @@ def main(args):
         sensor_server_process = subprocess.Popen([sys.executable, script_path, config_json])
     # sensors script will send data to this server
     previousData = 'happy'
-    show('happy')
+    show_async('happy')
     conn, addr = server.accept()
     conn.settimeout(0.1)
     while True:
@@ -174,10 +177,10 @@ def main(args):
                 print(data)
                 doInterrupt = 1
                 previousData = data
-                show(data)
+                show_async(data)
         except socket.timeout:
             if showOn!=1:
-                show(previousData)
+                show_async(previousData)
                 
 
                 
