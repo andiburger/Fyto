@@ -19,5 +19,5 @@ def get_sun_times(city):
     s = sun(city.observer, date=datetime.now(), tzinfo=city.timezone)
     # Apply 2-hour offset
     sunrise = (s["sunrise"] + timedelta(hours=2)).time()
-    sunset = (s["sunset"] - timedelta(hours=2)).time()
+    sunset = (s["sunset"] + timedelta(hours=2)).time()
     return sunrise, sunset
