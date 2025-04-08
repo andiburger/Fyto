@@ -124,7 +124,7 @@ try:
     MQTT_MSG = ""
     last_execution_time = time.time()
     last_sun_calc_date = datetime.now().date()
-    sunrise, sunset = get_sun_times()
+    sunrise, sunset = get_sun_times(city=city)
     while True:
         now = datetime.now()
         now = datetime.now()
