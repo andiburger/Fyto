@@ -140,6 +140,7 @@ try:
         else:
             backlight_off()
             client.send(bytes('black\n', 'utf-8'))  # oder 'blank\n', je nachdem wie du es im showimage/show behandelst
+            time.sleep(1)
             continue # Skip the rest of the loop if it's nighttime
         # Read the specified ADC channels using the previously set gain value.
         LDR_Value = LDR_channel.value
