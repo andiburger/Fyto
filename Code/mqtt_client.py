@@ -10,7 +10,7 @@ RECONNECT_RATE = 2
 MAX_RECONNECT_COUNT = 12
 MAX_RECONNECT_DELAY = 60
 
-def connect_mqtt(broker, port, client_id, username, password):
+def connect_mqtt(broker, port, client_id, username=None, password=None):
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
             _LOGGER.info("Connected to MQTT Broker!")

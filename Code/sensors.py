@@ -107,7 +107,7 @@ try:
     client.connect(('0.0.0.0', int(cfg['Port'])))
 
     #Connect to MQTT
-    mqtt_client = connect_mqtt()
+    mqtt_client = connect_mqtt(broker=broker, port=port, client_id=client_id, username=username, password=password)
     mqtt_client.on_disconnect = on_disconnect
     mqtt_client.loop_start()
 
