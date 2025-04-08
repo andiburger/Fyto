@@ -127,14 +127,14 @@ try:
     sunrise, sunset = get_sun_times(city=city)
     while True:
         now = datetime.now()
-        now = datetime.now()
         # Check if the current date is different from the last calculated date
         if now.date() != last_sun_calc_date:
-            sunrise, sunset = get_sun_times()
+            sunrise, sunset = get_sun_times(city=city)
             last_sun_calc_date = now.date()
             _LOGGER.info(f"Recalculated sunrise/sunset for {last_sun_calc_date}")
 
         is_daytime = sunrise <= now.time() <= sunset
+        _LOGGER.info(f"Now: {now.time()}, Sunrise: {sunrise}, Sunset: {sunset}")
         if is_daytime:
             backlight_on()
         else:
