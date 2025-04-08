@@ -11,7 +11,5 @@ def get_location(city_name):
         return None
 
 def get_sun_times(city):
-    s = sun(city.observer, date=datetime.now())
-    sunrise = s["sunrise"].time()
-    sunset = s["sunset"].time()
-    return sunrise, sunset
+    s = sun(city.observer, date=datetime.now(), tzinfo=city.timezone)
+    return s["sunrise"].time(), s["sunset"].time()
