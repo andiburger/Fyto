@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from plant_ai import identify_plant
 
 app = Flask(__name__)
 
@@ -30,6 +31,11 @@ def set_config():
 @app.route('/get_config', methods=['GET'])
 def get_config():
     return jsonify(config_data)
+
+@app.route('/upload_image', methods=['POST'])
+def upload_image():
+    image_path = request.form.get('image')
+    return identify_plant(image_path)
 
 # Run the server
 if __name__ == '__main__':
