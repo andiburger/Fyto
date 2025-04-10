@@ -125,6 +125,7 @@ try:
     last_execution_time = time.time()
     last_sun_calc_date = datetime.now().date()
     sunrise, sunset = get_sun_times(city=city)
+    last_sent_state = None
     while True:
         now = datetime.now()
         # Check if the current date is different from the last calculated date
@@ -134,14 +135,20 @@ try:
             _LOGGER.info(f"Recalculated sunrise/sunset for {last_sun_calc_date}")
 
         is_daytime = sunrise <= now.time() <= sunset
-        _LOGGER.info(f"Now: {now.time()}, Sunrise: {sunrise}, Sunset: {sunset}")
+
         if is_daytime:
             backlight_on()
+            if last_sent_state == "black":
+                _LOGGER.info("Daylight resumed. Sending default emotion.")
+                client.send(b"happy\n")
+                last_sent_state = "happy"
         else:
             backlight_off()
-            client.send(bytes('black\n', 'utf-8'))  # oder 'blank\n', je nachdem wie du es im showimage/show behandelst
+            client.send(bytes('black\n', 'utf-8'))
+            last_sent_state = "black"
             time.sleep(1)
             continue # Skip the rest of the loop if it's nighttime
+        _LOGGER.info(f"Now: {now.time()}, Sunrise: {sunrise}, Sunset: {sunset}")
         # Read the specified ADC channels using the previously set gain value.
         LDR_Value = LDR_channel.value
         LDR_Percent = _map(LDR_Value, 22500, 50, 0, 100)
@@ -167,6 +174,7 @@ try:
                 #client.connect(('0.0.0.0', 8080))
                 _LOGGER.info("Sending sleepy")
                 client.send(bytes('sleepy\n','utf-8'))
+                last_sent_state = "sleepy"
                 #client.close()
                 HighIn_DataSent = 0
                 LowIn_DataSent = 1
@@ -176,6 +184,7 @@ try:
                 #client.connect(('0.0.0.0', 8080))
                 _LOGGER.info("Sending happy")
                 client.send(bytes('happy\n','utf-8'))
+                last_sent_state = "happy"
                 #client.close()
                 HighIn_DataSent = 1
                 LowIn_DataSent = 0
@@ -186,6 +195,7 @@ try:
                 #client.connect(('0.0.0.0', 8080))
                 _LOGGER.info("Sending thirsty")
                 client.send(bytes('thirsty\n','utf-8'))
+                last_sent_state = "thirsty"
                 #client.close()
                 Thirsty_DataSent = 1
                 Savory_DataSent = 0
@@ -196,6 +206,7 @@ try:
                 #client.connect(('0.0.0.0', 8080))
                 _LOGGER.info("Sending savory")
                 client.send(bytes('savory\n','utf-8'))
+                last_sent_state = "savory"
                 #client.close()
                 Savory_DataSent = 1
                 Thirsty_DataSent = 0
@@ -206,6 +217,7 @@ try:
                 #client.connect(('0.0.0.0', 8080))
                 _LOGGER.info("Sending savory")
                 client.send(bytes('savory\n','utf-8'))
+                last_sent_state = "savory"
                 #client.close()
                 Happy_DataSent = 1
                 Savory_DataSent = 0
@@ -216,6 +228,7 @@ try:
                 #client.connect(('0.0.0.0', 8080))
                 _LOGGER.info("Sending hot")
                 client.send(bytes('hot\n','utf-8'))
+                last_sent_state = "hot"
                 #client.close()
                 TemperatureDataSent = 1
         elif(Temperature<Temperature_min):
@@ -223,6 +236,7 @@ try:
                 #client.connect(('0.0.0.0', 8080))
                 _LOGGER.info("Sending freeze")
                 client.send(bytes('freeze\n','utf-8'))
+                last_sent_state = "freeze"
                 #client.close()
                 TemperatureDataSent = 1
         else:
