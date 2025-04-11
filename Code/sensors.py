@@ -97,10 +97,54 @@ def backlight_off():
     GPIO.output(BACKLIGHT_PIN, GPIO.LOW)
     _LOGGER.info("backlight OFF")
 
-
-# Map function
 def _map(x, in_min, in_max, out_min, out_max):
+    """Map a value from one range to another."""
     return int((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
+
+def get_current_emotion(temperature, ldr_percent, moisture_percent):
+    """Determine the current emotion based on temperature, light intensity, and moisture level."""
+    # Priority-based emotion scoring system:
+    #
+    # | Emotion   | Meaning                    | Score |
+    # |-----------|----------------------------|-------|
+    # | freeze    | Critically cold            |   3   |
+    # | hot       | Critically hot             |   3   |
+    # | thirsty   | Low soil moisture          |   2   |
+    # | savory    | Very moist soil            |   2   |
+    # | sleepy    | Low light conditions       |   1   |
+    # | happy     | Everything is fine         |   1   (default if no issues)
+    #
+    # Higher score = higher priority when multiple conditions match.
+    # This ensures that more critical plant states are prioritized.
+    scores = {
+        "freeze": 0,
+        "hot": 0,
+        "thirsty": 0,
+        "savory": 0,
+        "sleepy": 0,
+        "happy": 0,
+    }
+    # Check conditions and assign scores
+    if temperature < Temperature_min:
+        scores["freeze"] += 3
+    elif temperature > Temperature_max:
+        scores["hot"] += 3
+
+    if moisture_percent < Moisture_min:
+        scores["thirsty"] += 2
+    elif moisture_percent > Moisture_max:
+        scores["savory"] += 2
+
+    if ldr_percent < LDR_Percent_min:
+        scores["sleepy"] += 1
+
+    if all(value == 0 for value in scores.values()):
+        scores["happy"] = 1  # Standard
+
+    # Determine the emotion with the highest score
+    emotion = max(scores, key=scores.get)
+    return emotion
+
 try:
     #Setup Client for communication
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -155,6 +199,12 @@ try:
         Moisture_Value = Moisture_channel.value
         Moisture_Percent = _map(Moisture_Value, 31000, 15500, 0, 100)
         Temperature =  temp_sensor.get_temperature()
+        emotion = get_current_emotion(Temperature, LDR_Percent, Moisture_Percent) # get current emotion
+        # Check if the emotion has changed
+        if emotion != last_sent_state:
+            _LOGGER.info(f"Sending {emotion}")
+            client.send(bytes(f"{emotion}\n", 'utf-8'))
+            last_sent_state = emotion
         _LOGGER.info(f"Temperature: {Temperature:.2f} °C")
         _LOGGER.info(f"Light Intensity : {LDR_Percent} %")
         _LOGGER.info(f"Moisture :{Moisture_Percent:.2f} %")
@@ -169,78 +219,6 @@ try:
             else:      
                 _LOGGER.error(f"Failed to send message to topic {topic}")
             last_execution_time = current_time
-        if (LDR_Percent < LDR_Percent_min):
-            if(LowIn_DataSent == 0):
-                #client.connect(('0.0.0.0', 8080))
-                _LOGGER.info("Sending sleepy")
-                client.send(bytes('sleepy\n','utf-8'))
-                last_sent_state = "sleepy"
-                #client.close()
-                HighIn_DataSent = 0
-                LowIn_DataSent = 1
-        elif (LDR_Percent > LDR_Percent_min):
-            if(HighIn_DataSent == 0):
-                print("High Intensity")
-                #client.connect(('0.0.0.0', 8080))
-                _LOGGER.info("Sending happy")
-                client.send(bytes('happy\n','utf-8'))
-                last_sent_state = "happy"
-                #client.close()
-                HighIn_DataSent = 1
-                LowIn_DataSent = 0
-            
-        if (Moisture_Percent < Moisture_min):
-            Moisture_Recent = Moisture_Percent
-            if(Thirsty_DataSent == 0):
-                #client.connect(('0.0.0.0', 8080))
-                _LOGGER.info("Sending thirsty")
-                client.send(bytes('thirsty\n','utf-8'))
-                last_sent_state = "thirsty"
-                #client.close()
-                Thirsty_DataSent = 1
-                Savory_DataSent = 0
-                Happy_DataSent = 0
-        elif (Moisture_Percent>Moisture_min and Moisture_Recent < Moisture_Percent and Moisture_Percent < Moisture_max):
-            Moisture_Recent = Moisture_Percent
-            if(Savory_DataSent == 0):
-                #client.connect(('0.0.0.0', 8080))
-                _LOGGER.info("Sending savory")
-                client.send(bytes('savory\n','utf-8'))
-                last_sent_state = "savory"
-                #client.close()
-                Savory_DataSent = 1
-                Thirsty_DataSent = 0
-                Happy_DataSent = 0
-        elif (Moisture_Percent > Moisture_max):
-            Moisture_Recent = Moisture_Percent
-            if(Happy_DataSent == 0):
-                #client.connect(('0.0.0.0', 8080))
-                _LOGGER.info("Sending savory")
-                client.send(bytes('savory\n','utf-8'))
-                last_sent_state = "savory"
-                #client.close()
-                Happy_DataSent = 1
-                Savory_DataSent = 0
-                Thirsty_DataSent = 0
-
-        if(Temperature>Temperature_max):
-            if(TemperatureDataSent == 0):
-                #client.connect(('0.0.0.0', 8080))
-                _LOGGER.info("Sending hot")
-                client.send(bytes('hot\n','utf-8'))
-                last_sent_state = "hot"
-                #client.close()
-                TemperatureDataSent = 1
-        elif(Temperature<Temperature_min):
-            if(TemperatureDataSent == 0):
-                #client.connect(('0.0.0.0', 8080))
-                _LOGGER.info("Sending freeze")
-                client.send(bytes('freeze\n','utf-8'))
-                last_sent_state = "freeze"
-                #client.close()
-                TemperatureDataSent = 1
-        else:
-                TemperatureDataSent = 0
         time.sleep(1)
 except KeyboardInterrupt:
     _LOGGER.info("Script interrupted by user (Ctrl+C). Cleaning up...")
