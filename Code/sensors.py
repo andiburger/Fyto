@@ -14,8 +14,9 @@ import sys
 
 import RPi.GPIO as GPIO # type: ignore
 from datetime import datetime
-from sun_logic import get_location, get_sun_times
-from mqtt_client import connect_mqtt, on_disconnect
+from Code.logic.sun_logic import get_location, get_sun_times
+from Code.logic.mqtt_client import connect_mqtt, on_disconnect
+from Code.logic.sensor_read import read_sensor_data
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -133,14 +134,6 @@ def mqtt_result_logging(topic, MQTT_MSG, status):
     else:      
         _LOGGER.error(f"Failed to send message to topic {topic}")
 
-def read_sensor_data():
-    ldr_val = LDR_channel.value
-    ldr = _map(ldr_val, 22500, 50, 0, 100)
-    moisture_val = Moisture_channel.value
-    moisture = _map(moisture_val, 31000, 15500, 0, 100)
-    temp = temp_sensor.get_temperature()
-    return temp, ldr, moisture
-
 try:
     #Setup Client for communication
     try:
@@ -177,7 +170,7 @@ try:
 
         if is_daytime:
             if last_sent_state == "black":
-                Temperature, LDR_Percent, Moisture_Percent = read_sensor_data()
+                Temperature, LDR_Percent, Moisture_Percent = read_sensor_data(LDR_channel, Moisture_channel, temp_sensor, _map)
                 emotion = get_current_emotion(Temperature, LDR_Percent, Moisture_Percent)
                 if emotion != last_sent_state:
                     client.send(bytes(f"{emotion}\n", 'utf-8'))
@@ -190,7 +183,7 @@ try:
             continue # Skip the rest of the loop if it's nighttime
         _LOGGER.info(f"Now: {now.time()}, Sunrise: {sunrise}, Sunset: {sunset}")
         # Read the specified ADC channels using the previously set gain value.
-        Temperature, LDR_Percent, Moisture_Percent = read_sensor_data()
+        Temperature, LDR_Percent, Moisture_Percent = read_sensor_data(LDR_channel, Moisture_channel, temp_sensor, _map)
         emotion = get_current_emotion(Temperature, LDR_Percent, Moisture_Percent) # get current emotion
         # Check if the emotion has changed
         if emotion != last_sent_state:
