@@ -52,15 +52,6 @@ lm35_constant = 10.0/1000
 ads_InputRange = 4.096 #For Gain = 1; Otherwise change accordingly
 ads_bit_Voltage = (ads_InputRange * 2) / (ADC_16BIT_MAX - 1)
 
-#Initialising Variables
-Moisture_Recent = 100
-HighIn_DataSent = 0
-LowIn_DataSent = 0
-Thirsty_DataSent = 0
-Savory_DataSent = 0
-Happy_DataSent = 0
-TemperatureDataSent = 0
-
 # min max values
 LDR_Percent_min = int(cfg['Light Intensity min'])#20
 LDR_Percent_max = int(cfg['Light Intensity max'])#20
@@ -110,7 +101,7 @@ def get_current_emotion(temperature, ldr_percent, moisture_percent):
     # | freeze    | Critically cold            |   3   |
     # | hot       | Critically hot             |   3   |
     # | thirsty   | Low soil moisture          |   2   |
-    # | savory    | Very moist soil            |   2   |
+    # | hydrated    | Very moist soil            |   2   |
     # | sleepy    | Low light conditions       |   1   |
     # | happy     | Everything is fine         |   1   (default if no issues)
     #
@@ -120,7 +111,7 @@ def get_current_emotion(temperature, ldr_percent, moisture_percent):
         "freeze": 0,
         "hot": 0,
         "thirsty": 0,
-        "savory": 0,
+        "hydrated": 0,
         "sleepy": 0,
         "happy": 0,
     }
@@ -133,7 +124,7 @@ def get_current_emotion(temperature, ldr_percent, moisture_percent):
     if moisture_percent < Moisture_min:
         scores["thirsty"] += 2
     elif moisture_percent > Moisture_max:
-        scores["savory"] += 2
+        scores["hydrated"] += 2
 
     if ldr_percent < LDR_Percent_min:
         scores["sleepy"] += 1
