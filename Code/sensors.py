@@ -64,7 +64,7 @@ Moisture_max = int(cfg['Moisture max'])#90
 broker = cfg['MQTT Host']#'192.168.178.160'
 port = int(cfg['MQTT Port'])#1883
 topic = cfg['MQTT Topic']#"smart_pot/data"
-cmd_topic = topic + "/cmd"
+emotion_topic = topic + "/emotion"
 loc_topic = topic + "/location"
 try:
     update_interval = int(cfg['MQTT Update Interval'])#360
@@ -136,6 +136,12 @@ def get_current_emotion(temperature, ldr_percent, moisture_percent):
     emotion = max(scores, key=scores.get)
     return emotion
 
+def mqtt_result_logging(topic, MQTT_MSG, status):
+    if status == 0:
+        _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{topic}`")
+    else:      
+        _LOGGER.error(f"Failed to send message to topic {topic}")
+
 try:
     #Setup Client for communication
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -151,11 +157,7 @@ try:
     MQTT_MSG = json.dumps({"location": city.name})
     result = mqtt_client.publish(loc_topic, MQTT_MSG)
     status = result[0]
-    if status == 0:
-        _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{loc_topic}`")
-    else:      
-        _LOGGER.error(f"Failed to send message to topic {loc_topic}")
-
+    mqtt_result_logging(loc_topic, MQTT_MSG, status)
     MQTT_MSG = ""
     last_execution_time = time.time()
     last_sun_calc_date = datetime.now().date()
@@ -196,6 +198,11 @@ try:
             _LOGGER.info(f"Sending {emotion}")
             client.send(bytes(f"{emotion}\n", 'utf-8'))
             last_sent_state = emotion
+            MQTT_MSG=json.dumps({"emotion": emotion})
+            result = mqtt_client.publish(emotion_topic, MQTT_MSG)
+            status = result[0]
+            mqtt_result_logging(topic, MQTT_MSG, status)
+            MQTT_MSG = ""
         _LOGGER.info(f"Temperature: {Temperature:.2f} °C")
         _LOGGER.info(f"Light Intensity : {LDR_Percent} %")
         _LOGGER.info(f"Moisture :{Moisture_Percent:.2f} %")
@@ -205,10 +212,8 @@ try:
             #send only every 360 seconds
             result = mqtt_client.publish(topic, MQTT_MSG)
             status = result[0]
-            if status == 0:
-                _LOGGER.info(f"Send `{MQTT_MSG}` to topic `{topic}`")
-            else:      
-                _LOGGER.error(f"Failed to send message to topic {topic}")
+            mqtt_result_logging(topic, MQTT_MSG, status)
+            MQTT_MSG = ""
             last_execution_time = current_time
         time.sleep(1)
 except KeyboardInterrupt:
