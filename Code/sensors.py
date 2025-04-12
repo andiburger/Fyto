@@ -1,11 +1,5 @@
 import time
 import socket
-import board
-import busio
-import adafruit_ads1x15.ads1115 as ADS # type: ignore
-from adafruit_ads1x15.analog_in import AnalogIn # type: ignore
-from w1thermsensor import W1ThermSensor # type: ignore
-
 from paho.mqtt import client as mqtt_client
 import random
 import logging
@@ -16,50 +10,23 @@ import RPi.GPIO as GPIO # type: ignore
 from datetime import datetime
 from Code.logic.sun_logic import get_location, get_sun_times
 from Code.logic.mqtt_client import connect_mqtt, on_disconnect
-from Code.logic.sensor_read import read_sensor_data
+from Code.logic.sensor_read import Sensor
+from Code.logic.emotion import Emotion
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
+# initialize Sensors
+my_sensors = Sensor()
 
 
 # sensor script receives config via sys.argv
-print(f"arguments: {sys.argv}")
 _LOGGER.info(f"arguments: {sys.argv}")
 cfg={}
 cfg = json.loads(sys.argv[1])
-print(f"config: {cfg}")
 _LOGGER.info(f"config: {cfg}")
-    
 
-i2c = busio.I2C(board.SCL, board.SDA)
-ads = ADS.ADS1115(i2c)
-# Analog input channels may differ based on the connection
-# use calibration.py to find the correct channel
-Moisture_channel = AnalogIn(ads, ADS.P1)
-LDR_channel = AnalogIn(ads, ADS.P2)
-#LM35_channel = AnalogIn(ads, ADS.P3)
-# Set up the backlight pin
-BACKLIGHT_PIN = 18
-
-# set GPIO mode
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(BACKLIGHT_PIN, GPIO.OUT)
-
-temp_sensor = W1ThermSensor()
-
-ADC_16BIT_MAX = 65536
-lm35_constant = 10.0/1000
-ads_InputRange = 4.096 #For Gain = 1; Otherwise change accordingly
-ads_bit_Voltage = (ads_InputRange * 2) / (ADC_16BIT_MAX - 1)
-
-# min max values
-LDR_Percent_min = int(cfg['Light Intensity min'])#20
-LDR_Percent_max = int(cfg['Light Intensity max'])#20
-Temperature_min = int(cfg['Temperature min'])#22
-Temperature_max = int(cfg['Temperature max'])#30
-Moisture_min = int(cfg['Moisture min'])#10
-Moisture_max = int(cfg['Moisture max'])#90
+emotion_logic = Emotion(cfg)
 
 # constants for mqtt
 broker = cfg['MQTT Host']#'192.168.178.160'
@@ -80,53 +47,6 @@ RECONNECT_RATE = 2
 MAX_RECONNECT_COUNT = 12
 MAX_RECONNECT_DELAY = 60
 
-def _map(x, in_min, in_max, out_min, out_max):
-    """Map a value from one range to another."""
-    return int((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
-
-def get_current_emotion(temperature, ldr_percent, moisture_percent):
-    """Determine the current emotion based on temperature, light intensity, and moisture level."""
-    # Priority-based emotion scoring system:
-    #
-    # | Emotion   | Meaning                    | Score |
-    # |-----------|----------------------------|-------|
-    # | freeze    | Critically cold            |   3   |
-    # | hot       | Critically hot             |   3   |
-    # | thirsty   | Low soil moisture          |   2   |
-    # | hydrated    | Very moist soil            |   2   |
-    # | sleepy    | Low light conditions       |   1   |
-    # | happy     | Everything is fine         |   1   (default if no issues)
-    #
-    # Higher score = higher priority when multiple conditions match.
-    # This ensures that more critical plant states are prioritized.
-    scores = {
-        "freeze": 0,
-        "hot": 0,
-        "thirsty": 0,
-        "hydrated": 0,
-        "sleepy": 0,
-        "happy": 0,
-    }
-    # Check conditions and assign scores
-    if temperature < Temperature_min:
-        scores["freeze"] += 3
-    elif temperature > Temperature_max:
-        scores["hot"] += 3
-
-    if moisture_percent < Moisture_min:
-        scores["thirsty"] += 2
-    elif moisture_percent > Moisture_max:
-        scores["hydrated"] += 2
-
-    if ldr_percent < LDR_Percent_min:
-        scores["sleepy"] += 1
-
-    if all(value == 0 for value in scores.values()):
-        scores["happy"] = 1  # Standard
-
-    # Determine the emotion with the highest score
-    emotion = max(scores, key=scores.get)
-    return emotion
 
 def mqtt_result_logging(topic, MQTT_MSG, status):
     if status == 0:
@@ -170,8 +90,8 @@ try:
 
         if is_daytime:
             if last_sent_state == "black":
-                Temperature, LDR_Percent, Moisture_Percent = read_sensor_data(LDR_channel, Moisture_channel, temp_sensor, _map)
-                emotion = get_current_emotion(Temperature, LDR_Percent, Moisture_Percent)
+                Temperature, LDR_Percent, Moisture_Percent = my_sensors.read_sensor_data()
+                emotion = emotion_logic.get_current_emotion(Temperature, LDR_Percent, Moisture_Percent)
                 if emotion != last_sent_state:
                     client.send(bytes(f"{emotion}\n", 'utf-8'))
                     last_sent_state = emotion
@@ -183,8 +103,8 @@ try:
             continue # Skip the rest of the loop if it's nighttime
         _LOGGER.info(f"Now: {now.time()}, Sunrise: {sunrise}, Sunset: {sunset}")
         # Read the specified ADC channels using the previously set gain value.
-        Temperature, LDR_Percent, Moisture_Percent = read_sensor_data(LDR_channel, Moisture_channel, temp_sensor, _map)
-        emotion = get_current_emotion(Temperature, LDR_Percent, Moisture_Percent) # get current emotion
+        Temperature, LDR_Percent, Moisture_Percent = my_sensors.read_sensor_data()
+        emotion = emotion_logic.get_current_emotion(Temperature, LDR_Percent, Moisture_Percent) # get current emotion
         # Check if the emotion has changed
         if emotion != last_sent_state:
             _LOGGER.info(f"Sending {emotion}")
@@ -195,9 +115,6 @@ try:
             status = result[0]
             mqtt_result_logging(topic, MQTT_MSG, status)
             MQTT_MSG = ""
-        _LOGGER.debug(f"Temperature: {Temperature:.2f} °C")
-        _LOGGER.debug(f"Light Intensity : {LDR_Percent} %")
-        _LOGGER.debug(f"Moisture :{Moisture_Percent:.2f} %")
         current_time = time.time()
         if current_time - last_execution_time >= update_interval:
             MQTT_MSG=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
