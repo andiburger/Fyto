@@ -68,7 +68,8 @@ emotion_topic = topic + "/emotion"
 loc_topic = topic + "/location"
 try:
     update_interval = int(cfg['MQTT Update Interval'])#360
-except:
+except KeyError:
+    _LOGGER.warning("No update interval configured. Using default (360s)")
     update_interval = 360
 client_id = f'smart_pot-{random.randint(0, 1000)}'
 username = cfg['MQTT Username']#'YOUR_USERNAME'
@@ -77,16 +78,6 @@ FIRST_RECONNECT_DELAY = 1
 RECONNECT_RATE = 2
 MAX_RECONNECT_COUNT = 12
 MAX_RECONNECT_DELAY = 60
-
-def backlight_on():
-    """Switches the backlight ON"""
-    GPIO.output(BACKLIGHT_PIN, GPIO.HIGH)
-    _LOGGER.info("backlight ON")
-
-def backlight_off():
-    """Switches the backlight OFF"""
-    GPIO.output(BACKLIGHT_PIN, GPIO.LOW)
-    _LOGGER.info("backlight OFF")
 
 def _map(x, in_min, in_max, out_min, out_max):
     """Map a value from one range to another."""
@@ -142,11 +133,22 @@ def mqtt_result_logging(topic, MQTT_MSG, status):
     else:      
         _LOGGER.error(f"Failed to send message to topic {topic}")
 
+def read_sensor_data():
+    ldr_val = LDR_channel.value
+    ldr = _map(ldr_val, 22500, 50, 0, 100)
+    moisture_val = Moisture_channel.value
+    moisture = _map(moisture_val, 31000, 15500, 0, 100)
+    temp = temp_sensor.get_temperature()
+    return temp, ldr, moisture
+
 try:
     #Setup Client for communication
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(('0.0.0.0', int(cfg['Port'])))
-
+    try:
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect(('0.0.0.0', int(cfg['Port'])))
+    except Exception as e:
+        _LOGGER.error(f"Could not connect to display socket: {e}")
+        raise
     #Connect to MQTT
     mqtt_client = connect_mqtt(broker=broker, port=port, client_id=client_id, username=username, password=password)
     mqtt_client.on_disconnect = on_disconnect
@@ -174,24 +176,21 @@ try:
         is_daytime = sunrise <= now.time() <= sunset
 
         if is_daytime:
-            backlight_on()
             if last_sent_state == "black":
+                Temperature, LDR_Percent, Moisture_Percent = read_sensor_data()
+                emotion = get_current_emotion(Temperature, LDR_Percent, Moisture_Percent)
+                if emotion != last_sent_state:
+                    client.send(bytes(f"{emotion}\n", 'utf-8'))
+                    last_sent_state = emotion
                 _LOGGER.info("Daylight resumed. Sending default emotion.")
-                client.send(b"happy\n")
-                last_sent_state = "happy"
         else:
-            backlight_off()
             client.send(bytes('black\n', 'utf-8'))
             last_sent_state = "black"
             time.sleep(1)
             continue # Skip the rest of the loop if it's nighttime
         _LOGGER.info(f"Now: {now.time()}, Sunrise: {sunrise}, Sunset: {sunset}")
         # Read the specified ADC channels using the previously set gain value.
-        LDR_Value = LDR_channel.value
-        LDR_Percent = _map(LDR_Value, 22500, 50, 0, 100)
-        Moisture_Value = Moisture_channel.value
-        Moisture_Percent = _map(Moisture_Value, 31000, 15500, 0, 100)
-        Temperature =  temp_sensor.get_temperature()
+        Temperature, LDR_Percent, Moisture_Percent = read_sensor_data()
         emotion = get_current_emotion(Temperature, LDR_Percent, Moisture_Percent) # get current emotion
         # Check if the emotion has changed
         if emotion != last_sent_state:
@@ -203,9 +202,9 @@ try:
             status = result[0]
             mqtt_result_logging(topic, MQTT_MSG, status)
             MQTT_MSG = ""
-        _LOGGER.info(f"Temperature: {Temperature:.2f} °C")
-        _LOGGER.info(f"Light Intensity : {LDR_Percent} %")
-        _LOGGER.info(f"Moisture :{Moisture_Percent:.2f} %")
+        _LOGGER.debug(f"Temperature: {Temperature:.2f} °C")
+        _LOGGER.debug(f"Light Intensity : {LDR_Percent} %")
+        _LOGGER.debug(f"Moisture :{Moisture_Percent:.2f} %")
         current_time = time.time()
         if current_time - last_execution_time >= update_interval:
             MQTT_MSG=json.dumps({"Temperature":Temperature,"Light Intensity":LDR_Percent,"Moisture %":Moisture_Percent})
