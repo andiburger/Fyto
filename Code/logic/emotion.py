@@ -28,7 +28,14 @@ class Emotion:
         return
     
     def get_current_emotion(self, temperature, ldr_percent, moisture_percent):
-        """Determine the current emotion based on temperature, light intensity, and moisture level."""
+        """Determine the current emotion based on temperature, light intensity, and moisture level.
+        Args:
+            temperature (float): The current temperature.
+            ldr_percent (float): The current light intensity as a percentage.
+            moisture_percent (float): The current moisture level as a percentage.
+        Returns:
+            str: The current emotion of the plant.
+        """
         # Priority-based emotion scoring system:
         #
         # | Emotion   | Meaning                    | Score |

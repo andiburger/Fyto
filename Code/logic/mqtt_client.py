@@ -1,5 +1,4 @@
 import time
-import random
 import logging
 from paho.mqtt import client as mqtt_client
 
@@ -11,7 +10,26 @@ MAX_RECONNECT_COUNT = 12
 MAX_RECONNECT_DELAY = 60
 
 def connect_mqtt(broker, port, client_id, username=None, password=None):
+    """
+    Connect to the MQTT broker.
+    Args:
+        broker (str): The MQTT broker address.
+        port (int): The port to connect to.
+        client_id (str): The client ID for the connection.
+        username (str, optional): The username for authentication. Defaults to None.
+        password (str, optional): The password for authentication. Defaults to None.
+    Returns:
+        mqtt.Client: The MQTT client instance.
+    """
     def on_connect(client, userdata, flags, rc):
+        """
+        Callback function for when the client connects to the broker.
+        Args:
+            client (mqtt.Client): The MQTT client instance.
+            userdata: User-defined data of any type.
+            flags: Response flags sent by the broker.
+            rc (int): The connection result code.
+        """
         if rc == 0:
             _LOGGER.info("Connected to MQTT Broker!")
         else:
@@ -25,6 +43,13 @@ def connect_mqtt(broker, port, client_id, username=None, password=None):
     return client
 
 def on_disconnect(client, userdata, rc):
+    """
+    Callback function for when the client disconnects from the broker.
+    Args:
+        client (mqtt.Client): The MQTT client instance.
+        userdata: User-defined data of any type.
+        rc (int): The disconnection result code.
+    """
     _LOGGER.info("Disconnected with result code: %s", rc)
     reconnect_count, reconnect_delay = 0, FIRST_RECONNECT_DELAY
     while reconnect_count < MAX_RECONNECT_COUNT:
