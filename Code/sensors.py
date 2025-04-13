@@ -8,10 +8,10 @@ import sys
 
 import RPi.GPIO as GPIO # type: ignore
 from datetime import datetime
-from Code.logic.sun_logic import get_location, get_sun_times
-from Code.logic.mqtt_client import connect_mqtt, on_disconnect
-from Code.logic.sensor_read import Sensor
-from Code.logic.emotion import Emotion
+from logic.sun_logic import get_location, get_sun_times
+from logic.mqtt_client import connect_mqtt, on_disconnect
+from logic.sensor_read import Sensor
+from logic.emotion import Emotion
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
