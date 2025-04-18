@@ -1,11 +1,11 @@
 import requests
 import pprint
 
-def identify_plant(image_path, api_key):
+def identify_plant(file_path, api_key):
     url = f"https://my-api.plantnet.org/v2/identify/all?api-key={api_key}"
 
     files = {
-        'images': open(image_path, 'rb')
+        'images': open(file_path, 'rb')
     }
 
     data = {
@@ -19,8 +19,8 @@ def identify_plant(image_path, api_key):
         if result["results"]:
             plant_info = result["results"][0]
             return {
-                "name": plant_info["species"]["scientificName"],
-                "common_names": plant_info["species"]["commonNames"],
+                "scientific_name": result["bestMatch"],
+                "common_names": ', '.join(plant_info["species"]["commonNames"]),
                 "confidence": plant_info["score"]
             }
         else:

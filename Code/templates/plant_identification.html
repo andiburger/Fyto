@@ -9,44 +9,49 @@
 <body>
     <div class="container">
         <h2 class="title">Plant Identification</h2>
-        <form action="/upload_image" method="post" enctype="multipart/form-data" class="form-container">
-            <div class="section">
-                <h3>Upload Plant Image</h3>
-                <label for="image-upload">Select Image:</label>
-                <input type="file" id="image-upload" name="image" accept="image/*">
+        <div style="display: flex; gap: 40px; align-items: flex-start;">
+            {% if image_url %}
+            <div style="flex-shrink: 0;">
+                <h3>Uploaded Image</h3>
+                <img src="{{ image_url }}" alt="Uploaded Plant Image" style="max-width: 300px; max-height: 300px; margin-left: -100px;">
             </div>
+            {% endif %}
+            <div style="flex-grow: 1;">
+                <form action="/upload_image" method="post" enctype="multipart/form-data" class="form-container">
+                    <div class="section">
+                        <h3>Upload Plant Image</h3>
+                        <label for="image-upload">Select Image:</label>
+                        <input type="file" id="image-upload" name="image" accept="image/*">
+                        <div class="section">
+                            <label for="api-key">API Key:</label>
+                            <input type="text" id="api-key" name="api_key" placeholder="Enter your API key" value="{{ api_key }}">
+                        </div>
+                    </div>
 
-            <div class="button-container">
-                <button type="submit">Upload</button>
-            </div>
-        </form>
+                    <div class="button-container">
+                        <button type="submit">Upload</button>
+                    </div>
+                </form>
 
-        <!-- Result Section -->
-        <div class="section">
-            <h3>Plant Details</h3>
-            <div id="plant-info">
-                <p><strong>Scientific Name:</strong> <span id="scientific-name"></span></p>
-                <p><strong>Common Names:</strong> <span id="common-names"></span></p>
-                <p><strong>Confidence:</strong> <span id="confidence"></span></p>
-                <p><strong>More Info:</strong> <a id="plant-url" href="#" target="_blank">Visit the plant page</a></p>
+                <!-- Result Section -->
+                <div class="section">
+                    <h3>Plant Details</h3>
+                    <div id="plant-info">
+                        <p><strong>Scientific Name:</strong> <span id="scientific-name"></span></p>
+                        <p><strong>Common Names:</strong> <span id="common-names"></span></p>
+                        <p><strong>Confidence:</strong> <span id="confidence"></span></p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // Simulate receiving data after image upload (you will replace this part with real API calls)
-        const plantInfo = {
-            scientificName: "Rosa rubiginosa",
-            commonNames: "Sweetbriar rose, Eglantine",
-            confidence: "98%",
-            url: "https://www.plantnet.org/en/plant-identification/"
-        };
-
-        // Update the plant info on the page
-        document.getElementById("scientific-name").innerText = plantInfo.scientificName;
-        document.getElementById("common-names").innerText = plantInfo.commonNames;
-        document.getElementById("confidence").innerText = plantInfo.confidence;
-        document.getElementById("plant-url").href = plantInfo.url;
-    </script>
+  {% if plant_data %}
+  <script>
+      document.getElementById("scientific-name").innerText = "{{ plant_data.scientific_name }}";
+      document.getElementById("common-names").innerText = "{{ plant_data.common_names }}";
+      document.getElementById("confidence").innerText = "{{ plant_data.confidence }}";
+  </script>
+  {% endif %}
 </body>
 </html>

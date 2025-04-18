@@ -41,5 +41,9 @@ instance/
 /static/uploads/*
 !/static/uploads/.gitkeep
 
+/Code/static/uploads/*
+!/code/static/uploads/.gitkeep
+
+
 #ignore apikey
 apikey

@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from ai.plant_ai import identify_plant
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -32,10 +34,39 @@ def set_config():
 def get_config():
     return jsonify(config_data)
 
+@app.route("/plant_identification")
+def plant_identification():
+    return render_template("plant_identification.html")
+
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
-    image_path = request.form.get('image')
-    return identify_plant(image_path,None)
+    if 'image' not in request.files:
+        return "No file part", 400
+
+    file = request.files['image']
+    api_key = request.form.get("api_key", type=str)
+
+    if file.filename == '':
+        return "No selected file", 400
+
+    # Upload-Pfad erstellen
+    upload_folder = os.path.join(os.path.dirname(__file__), "static", "uploads")
+    os.makedirs(upload_folder, exist_ok=True)
+
+    # Datei speichern
+    filename = secure_filename(file.filename)  # falls nicht schon vorhanden, import: from werkzeug.utils import secure_filename
+    file_path = os.path.join(upload_folder, filename)
+    file.save(file_path)
+
+    # relative URL für Anzeige im Template
+    image_url = f"/static/uploads/{filename}"
+
+    # Bild analysieren
+    result = identify_plant(file_path=file_path, api_key=api_key)
+
+    # Template anzeigen mit Ergebnis und Bild
+    return render_template("plant_identification.html", plant_data=result, api_key=api_key, image_url=image_url)
+
 
 # Run the server
 if __name__ == '__main__':
