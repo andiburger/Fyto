@@ -22,24 +22,29 @@ config_data = {
 # Configuration page
 @app.route('/')
 def index():
+    """Render the configuration page."""
     return render_template('config.html', config=config_data)
 # API to set configuration
 @app.route('/set_config', methods=['POST'])
 def set_config():
+    """Set the configuration data."""
     global config_data
     config_data.update(request.form)
     return jsonify({"message": "Configuration saved successfully"})
 # API to get configuration
 @app.route('/get_config', methods=['GET'])
 def get_config():
+    """Get the current configuration data."""
     return jsonify(config_data)
 
 @app.route("/plant_identification")
 def plant_identification():
+    """Render the plant identification page."""
     return render_template("plant_identification.html")
 
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
+    """Handle image upload and plant identification."""
     if 'image' not in request.files:
         return "No file part", 400
 
@@ -70,4 +75,5 @@ def upload_image():
 
 # Run the server
 if __name__ == '__main__':
+    """Run the Flask application."""
     app.run(debug=True)
